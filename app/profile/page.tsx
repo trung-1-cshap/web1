@@ -18,9 +18,6 @@ export default function ProfilePage() {
   const [showOld, setShowOld] = useState(false)
   const [showNew, setShowNew] = useState(false)
   const [msg, setMsg] = useState<string | null>(null)
-
-  if (!user) return <div className="p-6">Bạn cần đăng nhập để xem trang này.</div>
-
   useEffect(() => {
     async function load() {
       if (user?.role === 'admin') {
@@ -32,6 +29,10 @@ export default function ProfilePage() {
     }
     load()
   }, [user, listUsers])
+
+  // If not authenticated, show a simple message. Keep this after hooks
+  // to avoid changing hooks order between renders.
+  if (!user) return <div className="p-6">Bạn cần đăng nhập để xem trang này.</div>
 
   async function saveProfile(e: React.FormEvent) {
     e.preventDefault()

@@ -16,7 +16,7 @@ export function exportToCsv(filename: string, rows: Record<string, any>[]) {
     const vals = keys.map((k) => {
       const v = row[k] ?? '';
       const s = typeof v === 'string' ? v : String(v);
-      // escape quotes
+      // thoát dấu ngoặc kép
       return `"${s.replace(/"/g, '""')}"`;
     });
     lines.push(vals.join(','));

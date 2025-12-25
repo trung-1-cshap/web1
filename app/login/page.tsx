@@ -25,7 +25,7 @@ export default function LoginPage() {
 
   return (
     <div className="max-w-md mx-auto p-6">
-      <h2 className="text-xl font-semibold mb-4">Đăng nhập (mock)</h2>
+      <h2 className="text-xl font-semibold mb-4"><></>Đăng nhập</h2>
       <form onSubmit={submit} className="flex flex-col gap-3">
         <input value={email} onChange={(e) => setEmail(e.target.value)} className="border rounded px-3 py-2" placeholder="Email" />
         <div className="relative">

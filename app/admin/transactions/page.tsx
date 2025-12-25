@@ -50,11 +50,13 @@ export default function TransactionsPage() {
     handleAdd,
     handleAddCustomer,
     handleDeleteCustomer,
+    handleApproveCustomer,
     toggleCustomerReceived,
     startEditTransaction,
     cancelEditTransaction,
     saveEditTransaction,
     toggleTransactionReceived,
+    handleApprove,
     startEditCustomer,
     cancelEditCustomer,
     saveEditCustomer,
@@ -84,7 +86,7 @@ export default function TransactionsPage() {
         <div className="mb-3 text-sm text-green-700 bg-green-100 p-2 rounded">{flashMsg}</div>
       )}
 
-      { activeTab === "transactions" && (
+      <div className={`transition-all duration-500 ease-in-out overflow-hidden ${activeTab === "transactions" ? "max-h-[2000px] opacity-100 translate-y-0" : "max-h-0 opacity-0 -translate-y-1 pointer-events-none"}`}>
         <TransactionsForm
           amount={amount}
           setAmount={setAmount}
@@ -97,9 +99,9 @@ export default function TransactionsPage() {
           categories={categories}
           onAdd={handleAdd}
         />
-      )}
+      </div>
 
-      { activeTab === "received" && (
+      <div className={`transition-all duration-500 ease-in-out overflow-hidden ${activeTab === "received" ? "max-h-[2000px] opacity-100 translate-y-0" : "max-h-0 opacity-0 -translate-y-1 pointer-events-none"}`}>
         <ReceivedSection
           items={items}
           customers={customers}
@@ -108,11 +110,12 @@ export default function TransactionsPage() {
           startEditTransaction={startEditTransaction}
           handleDelete={handleDelete}
           toggleTransactionReceived={toggleTransactionReceived}
+          handleApprove={handleApprove}
           toggleCustomerReceived={toggleCustomerReceived}
         />
-      )}
+      </div>
 
-      { activeTab === "customers" && (
+      <div className={`transition-all duration-500 ease-in-out overflow-hidden ${activeTab === "customers" ? "max-h-[2000px] opacity-100 translate-y-0" : "max-h-0 opacity-0 -translate-y-1 pointer-events-none"}`}>
         <CustomersSection
           customers={customers}
           custName={custName}
@@ -139,28 +142,29 @@ export default function TransactionsPage() {
           saveEditCustomer={saveEditCustomer}
           handleDeleteCustomer={handleDeleteCustomer}
           toggleCustomerReceived={toggleCustomerReceived}
+          handleApproveCustomer={handleApproveCustomer}
           user={user}
         />
-      )}
+      </div>
 
-        { activeTab === "trash" && (
-          <TrashSection
-            trash={trash}
-            customersTrash={customersTrash}
-            user={user}
-            categories={categories}
-            restoreFromTrash={restoreFromTrash}
-            restoreCustomerFromTrash={restoreCustomerFromTrash}
-            permanentlyDelete={permanentlyDelete}
-            permanentlyDeleteCustomer={permanentlyDeleteCustomer}
-            permanentlyDeleteAll={permanentlyDeleteAll}
-            permanentlyDeleteAllCustomers={permanentlyDeleteAllCustomers}
-          />
-        )}
+      <div className={`transition-all duration-500 ease-in-out overflow-hidden ${activeTab === "trash" ? "max-h-[2000px] opacity-100 translate-y-0" : "max-h-0 opacity-0 -translate-y-1 pointer-events-none"}`}>
+        <TrashSection
+          trash={trash}
+          customersTrash={customersTrash}
+          user={user}
+          categories={categories}
+          restoreFromTrash={restoreFromTrash}
+          restoreCustomerFromTrash={restoreCustomerFromTrash}
+          permanentlyDelete={permanentlyDelete}
+          permanentlyDeleteCustomer={permanentlyDeleteCustomer}
+          permanentlyDeleteAll={permanentlyDeleteAll}
+          permanentlyDeleteAllCustomers={permanentlyDeleteAllCustomers}
+        />
+      </div>
 
       
 
-      { activeTab === "transactions" && (
+      <div className={`transition-all duration-500 ease-in-out overflow-hidden ${activeTab === "transactions" ? "max-h-[2000px] opacity-100 translate-y-0" : "max-h-0 opacity-0 -translate-y-1 pointer-events-none"}`}>
         <TransactionsTable
           items={items}
           categories={categories}
@@ -173,8 +177,9 @@ export default function TransactionsPage() {
           saveEditTransaction={saveEditTransaction}
           toggleTransactionReceived={toggleTransactionReceived}
           handleDelete={handleDelete}
+          handleApprove={handleApprove}
         />
-      )}
+      </div>
       
     </div>
   );

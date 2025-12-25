@@ -10,7 +10,7 @@ export default function Footer() {
   return (
     <footer className="bg-[#07263a] text-white">
       <div className="max-w-7xl mx-auto px-6 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 items-start">
+        <div className="flex flex-col md:flex-row md:justify-between gap-8 items-start">
           <div>
             <img
               src="https://www.ndahome.com/_next/image?url=%2Flogo.png&w=384&q=75"
@@ -22,24 +22,8 @@ export default function Footer() {
             </p>
           </div>
 
-          <div>
-            <h4 className="font-semibold text-white mb-4">Liên kết nhanh</h4>
-            <ul className="space-y-2 text-gray-200">
-              <li><a href="#" className="hover:underline">Trang chủ</a></li>
-              <li><a href="#" className="hover:underline">Về chúng tôi</a></li>
-              <li><a href="#" className="hover:underline">Tin tức</a></li>
-            </ul>
-          </div>
 
-          <div>
-            <h4 className="font-semibold text-white mb-4">Hỗ trợ</h4>
-            <ul className="space-y-2 text-gray-200">
-              <li><a href="#" className="hover:underline">Câu hỏi thường gặp</a></li>
-              <li><a href="#" className="hover:underline">Chính sách bảo mật</a></li>
-              <li><a href="#" className="hover:underline">Điều khoản sử dụng</a></li>
-            </ul>
-          </div>
-
+     
           <div>
             <h4 className="font-semibold text-white mb-4">Liên hệ</h4>
             <ul className="space-y-3 text-gray-200">
@@ -50,12 +34,21 @@ export default function Footer() {
                 </div>
               </li>
               <li className="flex items-center gap-3">
-                <svg className="w-5 h-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5h2l2 5-2 2-1 4h14l-1-4-2-2 2-5h2"></path></svg>
-                <div className="text-gray-200">0909023919</div>
+                <svg className="w-5 h-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 10V8a5 5 0 0110 0v2" />
+                  <circle cx="9" cy="14" r="0.5" fill="currentColor" />
+                  <circle cx="12" cy="14" r="0.5" fill="currentColor" />
+                  <circle cx="15" cy="14" r="0.5" fill="currentColor" />
+                </svg>
+                <div className="text-gray-200">098.484.3052</div>
               </li>
               <li className="flex items-center gap-3">
-                <svg className="w-5 h-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 12H8m0 0l4-4m-4 4l4 4"></path></svg>
-                <div className="text-gray-200">contact@vinh.com</div>
+                <svg className="w-5 h-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 8l-9 6-9-6" />
+                </svg>
+                <div className="text-gray-200">contact@ndahome.com</div>
               </li>
             </ul>
           </div>
@@ -64,7 +57,7 @@ export default function Footer() {
         <hr className="border-gray-600 my-6" />
 
         <div className="text-center text-gray-300 py-4">
-          © 2025 Thực chiến CNTT.
+          © 2025 NDa Home. All rights reserved.
         </div>
       </div>
 

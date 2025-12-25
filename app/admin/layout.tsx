@@ -10,7 +10,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
-    // brief check: if not logged in redirect to /login
+    // kiểm tra ngắn: nếu chưa đăng nhập thì chuyển hướng về /login
     if (!user) {
       try {
         const raw = localStorage.getItem('mock_user');
@@ -24,7 +24,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       }
     }
 
-    // Previously enforced role-based access here — removed to allow any authenticated user
+    // Trước đây có kiểm tra phân quyền theo vai trò ở đây — đã bỏ để cho phép bất kỳ người dùng đã xác thực
 
     setChecking(false);
   }, [router, user]);

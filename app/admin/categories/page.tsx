@@ -10,19 +10,28 @@ export default function CategoriesPage() {
   
 
   useEffect(() => {
-    getCategories().then(setItems);
+    getCategories().then((cats) => setItems((cats || []).filter((c) => (c.name || '').trim() !== 'Uncategorized')));
   }, []);
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
     if (!name) return;
-    // prevent duplicate category names (case-insensitive)
+    // ngăn tên danh mục trùng lặp (không phân biệt hoa thường)
     const norm = name.trim().toLowerCase();
+    if (norm === 'uncategorized') {
+      alert('Tên "Uncategorized" không được phép');
+      return;
+    }
     if (items.some(i => (i.name || '').trim().toLowerCase() === norm)) {
       alert('Danh mục này đã tồn tại');
       return;
     }
     const created = await addCategory({ name, type });
+    // nếu backend trả về 'Uncategorized', không hiển thị
+    if ((created.name || '').trim() === 'Uncategorized') {
+      setName("");
+      return;
+    }
     setItems((s) => [created, ...s]);
     setName("");
   }

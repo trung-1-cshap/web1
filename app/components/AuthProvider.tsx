@@ -6,7 +6,7 @@ import { getStoredUser, loginMock, registerMock, logoutMock, listUsers, updatePr
 type AuthContext = {
   user: User | null;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, name?: string) => Promise<void>;
+  register: (email: string, password: string, name?: string) => Promise<User | void>;
   updateProfile: (data: { name?: string }) => Promise<void>;
   changePassword: (oldPassword: string, newPassword: string) => Promise<void>;
   listUsers: () => Promise<User[]>;
@@ -34,7 +34,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   async function register(email: string, password: string, name?: string) {
     const u = await registerMock(email, password, name);
-    setUser(u);
+    // If there's no current user, sign in the newly created account (normal registration flow).
+    // If an admin (or any logged-in user) calls register to create another account, do not replace
+    // the current session — keep the logged-in user intact.
+    if (!user) setUser(u);
+    return u;
   }
 
   async function updateProfileClient(data: { name?: string }) {
@@ -54,14 +58,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   async function setUserRoleClient(email: string, role: string) {
     setUserRole(email, role);
-    // if current user role changed, refresh stored user
+    // nếu vai trò người dùng hiện tại thay đổi, làm mới thông tin lưu trữ
     const u = getStoredUser();
     setUser(u);
   }
 
   async function deleteUserClient(email: string) {
     deleteUser(email);
-    // if deleted current user, refresh
+    // nếu xóa người dùng hiện tại, làm mới
     const u = getStoredUser();
     setUser(u);
   }

@@ -16,7 +16,7 @@ type User = {
 const USERS_KEY = 'mock_users';
 const CURRENT_KEY = 'mock_user';
 
-// cookie helpers (client-side)
+// helper cookie (phía client)
 function setCookie(name: string, value: string, days = 7) {
   if (typeof document === 'undefined') return;
   const expires = new Date();
@@ -36,7 +36,7 @@ function deleteCookie(name: string) {
   document.cookie = `${name}=; Max-Age=0; path=/`;
 }
 
-// validators
+// bộ kiểm tra (validators)
 const gmailRegex = /^[^\s@]+@gmail\.com$/i;
 const strongPassRegex = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z0-9]).+$/;
 
@@ -82,7 +82,14 @@ export async function registerMock(email: string, password: string, name?: strin
   users.unshift(newUser);
   writeUsers(users);
   const publicUser: User = { id, email, name: resolvedName, role: 'user' };
-  try { setCookie(CURRENT_KEY, JSON.stringify(publicUser), 7); } catch (e) {}
+  try {
+    // Only set the current-user cookie when there's no existing session.
+    // This preserves the common registration flow (sign-in after register)
+    // but prevents an already-authenticated admin from being signed out
+    // when they create another account via admin UI.
+    const existing = getCookie(CURRENT_KEY);
+    if (!existing) setCookie(CURRENT_KEY, JSON.stringify(publicUser), 7);
+  } catch (e) {}
   return Promise.resolve(publicUser);
 }
 
@@ -102,7 +109,7 @@ export function getStoredUser(): User | null {
 
 export type { User };
 
-// --- Additional mock user management ---
+// --- Quản lý người dùng mock bổ sung ---
 
 export function listUsers(): User[] {
   const users = readUsers();
@@ -165,7 +172,7 @@ export function getUserPassword(targetEmail: string): string | null {
   }
 }
 
-// Client-side helper: ensure admin exists and set current user cookie/localStorage when running in browser
+// Helper phía client: đảm bảo admin tồn tại và thiết lập cookie/localStorage khi chạy trong trình duyệt
 export function ensureClientSeedAdmin() {
   if (typeof window === 'undefined') return;
   try {
@@ -189,18 +196,18 @@ export function ensureClientSeedAdmin() {
       try { setCookie(CURRENT_KEY, JSON.stringify({ id: users[idx].id, email: users[idx].email, name: users[idx].name, role: users[idx].role }), 7); } catch (e) {}
     }
   } catch (e) {
-    // ignore
+    // bỏ qua
   }
 }
 
-// Ensure the requested admin account exists (or is upgraded).
+  // Đảm bảo tài khoản admin yêu cầu tồn tại (hoặc được nâng cấp).
 ;(function ensureSeedAdmin() {
   try {
     const email = 'NguyenDuyAn@gmail.com';
     const users = readUsers();
     const idx = users.findIndex(u => u.email.toLowerCase() === email.toLowerCase());
     if (idx === -1) {
-      // add a seeded admin with a default password (mock only)
+      // thêm admin mẫu với mật khẩu mặc định (chỉ mock)
       const seed = {
         id: 'u_admin_' + Date.now(),
         email,
@@ -217,6 +224,6 @@ export function ensureClientSeedAdmin() {
       try { setCookie(CURRENT_KEY, JSON.stringify({ id: users[idx].id, email: users[idx].email, name: users[idx].name, role: users[idx].role }), 7); } catch (e) {}
     }
   } catch (e) {
-    // ignore seed errors in non-browser environments
+    // bỏ qua lỗi seed trong môi trường không phải trình duyệt
   }
 })();

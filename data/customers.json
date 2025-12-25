@@ -1,1 +1,15 @@
-[]
+[
+  {
+    "id": "c1766663257432",
+    "name": "Trung",
+    "phone": "09050124",
+    "depositDate": "2025-12-25T00:00:00.000Z",
+    "depositAmount": 15000000,
+    "commission": 10,
+    "createdAt": "2025-12-25T11:47:37.416Z",
+    "performedBy": "Trung ",
+    "approved": true,
+    "approvedBy": "Trung ",
+    "approvedAt": "2025-12-25T11:47:52.131Z"
+  }
+]

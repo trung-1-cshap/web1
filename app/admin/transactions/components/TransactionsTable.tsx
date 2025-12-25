@@ -2,6 +2,7 @@
 
 import React from "react";
 import type { Transaction, Category } from "../../../../lib/mockService";
+import { canApproveTransaction, canSoftDelete } from "../../../../lib/permissions";
 import { formatNumberVN } from "../../../../lib/format";
 
 type Props = {
@@ -18,7 +19,7 @@ type Props = {
   handleDelete: (id: string) => Promise<void>;
 };
 
-export default function TransactionsTable({ items, categories, user, editingTransactionId, editTransactionData, setEditTransactionData, startEditTransaction, cancelEditTransaction, saveEditTransaction, toggleTransactionReceived, handleDelete }: Props) {
+export default function TransactionsTable({ items, categories, user, editingTransactionId, editTransactionData, setEditTransactionData, startEditTransaction, cancelEditTransaction, saveEditTransaction, toggleTransactionReceived, handleDelete, handleApprove }: Props) {
   return (
     <div className="bg-white border rounded">
       <div className="overflow-x-auto">
@@ -42,6 +43,7 @@ export default function TransactionsTable({ items, categories, user, editingTran
               <th className="text-left p-3">Loại</th>
               <th className="text-left p-3">Danh mục</th>
               <th className="p-3">Hành động</th>
+              
               <th className="p-3">Đã thu</th>
             </tr>
           </thead>
@@ -84,8 +86,9 @@ export default function TransactionsTable({ items, categories, user, editingTran
                     <td className="p-3 whitespace-normal break-words">{categories.find((c) => String(c.id) === String(it.categoryId))?.name ?? "-"}</td>
                     <td className="p-3 text-center">
                       <button className="text-blue-600 mr-2" onClick={() => startEditTransaction(it)}>Sửa</button>
-                      {user?.role === 'admin' ? <button className="text-red-600" onClick={() => handleDelete(it.id)}>Xóa</button> : '-'}
+                      {canSoftDelete(user) ? <button className="text-red-600" onClick={() => handleDelete(it.id)}>Xóa</button> : '-'}
                     </td>
+                    
                     <td className="p-3 text-center">
                       <input type="checkbox" checked={Boolean(it.received)} onChange={(e) => toggleTransactionReceived(it.id, e.target.checked)} />
                     </td>

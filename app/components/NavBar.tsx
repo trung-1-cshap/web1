@@ -1,5 +1,10 @@
 "use client"
 
+// CHÚ Ý: Component Header
+// - Được render trong: [app/layout.tsx](app/layout.tsx#L34)
+// - Thẻ <header> trong file này bắt đầu tại: app/components/NavBar.tsx#L40
+// Bạn có thể chỉnh sửa markup header bên dưới để thay đổi header / thanh trên cùng.
+
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useAuth } from './AuthProvider'
@@ -9,7 +14,7 @@ import { useAuth } from './AuthProvider'
 // URL ảnh bạn cung cấp:
 // https://img2.thuthuat123.com/uploads/2020/04/07/anh-bau-troi-may-dep-nhat_094801736.jpg
 // Hiện đang dùng URL bên ngoài dưới đây. Nếu muốn dùng file local, hãy tải ảnh vào `public/` và đổi HEADER_BG tương ứng.
-const HEADER_BG = 'https://img2.thuthuat123.com/uploads/2020/04/07/anh-bau-troi-may-dep-nhat_094801736.jpg'
+const HEADER_BG = ''
 
 export default function NavBar() {
   const pathname = usePathname() || '/'
@@ -37,16 +42,14 @@ export default function NavBar() {
   }
 
   return (
-    <header className="relative h-36 md:h-28 lg:h-40">
+    <header className="relative h-36 md:h-28 lg:h-40 header-gradient">
         {/* Phần nền trang trí phía sau header (toàn bộ khối)
           ĐIỂM THAY ẢNH: chỉnh `HEADER_BG` ở đầu file này
         */}
-      <div className="absolute inset-0 -z-20 overflow-hidden">
-        <img src={HEADER_BG} alt="bg" className="w-full h-full object-cover" />
-      </div>
+      {/* Background image removed to use solid header color */}
 
       {/* Lớp phủ (overlay) mờ nhẹ để chữ dễ đọc trên nền ảnh */}
-      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-black/10 via-transparent to-black/8" />
+      <div className="absolute inset-0 -z-10" />
 
       <div className="relative z-10 max-w-7xl mx-auto flex items-center justify-between px-4 h-full">
         {/* Bên trái: Logo */}
@@ -57,15 +60,15 @@ export default function NavBar() {
           </Link>
         </div>      
 
-        {/* Ở giữa: menu điều hướng (chỉ hiện khi đã đăng nhập) */}
-        {user ? (
-          <nav className="flex-1">
+        {/* Ở giữa: menu điều hướng (dùng hiệu ứng chuyển mượt) */}
+        <div className={`flex-1 transition-all duration-300 ease-out ${user ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2 pointer-events-none'}`}>
+          <nav>
             <ul className="flex justify-center gap-6 list-none m-0 p-0">
               {navItems.map((it) => (
                 <li key={it.href}>
                   <Link
                     href={it.href}
-                    className={`inline-block px-4 py-2 rounded-md font-semibold ${isActive(it.href) ? 'bg-white/30 text-white' : 'text-white hover:bg-white/10'}`}
+                    className={`nav-link inline-block px-4 py-2 rounded-md font-semibold transform transition duration-200 ease-out ${isActive(it.href) ? 'active bg-white/30 text-white' : 'text-white hover:text-[#48a0f7] hover:bg-white/10 hover:scale-105 hover:shadow-md'}`}
                   >
                     {it.label}
                   </Link>
@@ -73,25 +76,25 @@ export default function NavBar() {
               ))}
             </ul>
           </nav>
-        ) : (
-          <div className="flex-1" />
-        )}
+        </div>
 
         {/* Phía phải: nút/ hành động */}
         <div className="flex items-center gap-4">
-          {user ? (
+          <div className={`transition-all duration-300 ease-out ${user ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2 pointer-events-none'}`}>
             <div className="flex items-center gap-3">
-              <Link href="/profile" className="text-sm font-medium text-white text-right hover:underline">
-                <div>Xin chào, {user.name}</div>
-                <div className="text-xs text-white/70">{(user.role ?? 'user').toString()}</div>
+              <Link href="/profile" className="text-sm font-medium text-white text-right hover:underline transition-transform duration-150 hover:scale-105">
+                <div>Xin chào, {user?.name}</div>
+                <div className="text-xs text-white/70">{(user?.role ?? 'user').toString()}</div>
               </Link>
-              <button onClick={handleLogout} className="px-3 py-1 rounded-md bg-red-600/90 text-white text-sm">Đăng xuất</button>
+              <button onClick={handleLogout} className="ml-3 px-3 py-1 rounded-md bg-red-600/90 text-white text-sm transform transition duration-150 hover:scale-105 hover:shadow-sm">Đăng xuất</button>
             </div>
-          ) : (
+          </div>
+
+          <div className={`transition-all duration-300 ease-out ${!user ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2 pointer-events-none'}`}>
             <div className="flex items-center">
-              <Link href="/login" className="px-4 py-2 rounded-md font-bold text-white bg-gradient-to-r from-amber-400 to-amber-800 shadow">Đăng Nhập</Link>
+              <Link href="/login" className="px-4 py-2 rounded-md font-bold text-white bg-gradient-to-r from-amber-400 to-amber-800 shadow transform transition duration-150 hover:scale-105 hover:shadow-lg">Đăng Nhập</Link>
             </div>
-          )}
+          </div>
         </div>
       </div>
     </header>

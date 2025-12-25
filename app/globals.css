@@ -1,21 +1,23 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ecea96;
+  --background: #fdefc9;
   --foreground: #171717;
+  --primary: #1E3A8A;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #cc9999;
+    --background: #fdefc9;
+    --foreground: #171717;
   }
 }
 
@@ -23,4 +25,69 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Animated header gradient used by the NavBar component */
+.header-gradient {
+  background: linear-gradient(90deg, #fff2ea 0%, #f2b96a 50%, #fff2ea 100%);
+  background-size: 200% 200%;
+  -webkit-background-clip: border-box;
+  animation: gradientShift 8s ease infinite;
+  box-shadow: 0 10px 28px rgba(0,0,0,0.20);
+  color: var(--foreground);
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Subtle light overlay to make header appear a bit lighter */
+.header-gradient::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,0.08);
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Nav link animated underline */
+.nav-link {
+  position: relative;
+  display: inline-block;
+}
+.nav-link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -6px;
+  height: 2px;
+  width: 0;
+  background: rgba(255,255,255,0.95);
+  border-radius: 2px;
+  transition: width 260ms cubic-bezier(.2,.8,.2,1), opacity 200ms;
+  opacity: 0;
+}
+.nav-link:hover::after,
+.nav-link.active::after {
+  width: 100%;
+  opacity: 1;
+}
+
+/* Make form controls have white background */
+input[type="text"], input[type="number"], input[type="date"], input[type="tel"], input[type="search"], input, textarea, select {
+  background: #ffffff;
+  color: var(--foreground);
+  border-color: #d1d5db;
+}
+
+/* Make large total numbers (used in reports) appear on white background */
+.text-2xl.font-bold {
+  background: #ffffff;
+  color: var(--foreground);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  display: inline-block;
 }

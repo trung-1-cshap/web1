@@ -25,7 +25,7 @@ export default function ReportsPage() {
     { thu: 0, chi: 0 }
   );
 
-  // sums from customers: deposit received and contract received
+  // tổng từ customers: tiền cọc đã thu và tiền hợp đồng đã thu
   const customerTotals = customers.reduce((acc, c) => {
     const deposit = Number(c.depositAmount ?? 0);
     const contract = Number(c.contractAmount ?? 0);
@@ -41,7 +41,7 @@ export default function ReportsPage() {
     exportToCsv("transactions.csv", rows);
   }
 
-  // simple chart data (thu vs chi)
+  // dữ liệu biểu đồ đơn giản (Thu vs Chi)
   const chartData = [
     { label: "Thu", value: totals.thu },
     { label: "Chi", value: totals.chi },
@@ -49,7 +49,7 @@ export default function ReportsPage() {
 
   const max = Math.max(chartData[0].value, chartData[1].value, 1);
 
-  // Access: require authentication but do not restrict by role
+  // Truy cập: yêu cầu đăng nhập nhưng không giới hạn theo vai trò
   if (!user) return <div className="p-6">Bạn cần đăng nhập để xem báo cáo.</div>
 
   return (
@@ -57,7 +57,7 @@ export default function ReportsPage() {
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-2xl font-semibold">Báo cáo Thu/Chi</h2>
         <div className="flex gap-2">
-          <button onClick={handleExport} className="bg-slate-800 text-white px-4 py-2 rounded">Xuất CSV</button>
+          <button onClick={handleExport} className="bg-[#22c55e] hover:bg-[#16a34a] text-white px-4 py-2 rounded">Xuất CSV</button>
         </div>
       </div>
 

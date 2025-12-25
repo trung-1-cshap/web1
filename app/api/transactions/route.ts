@@ -17,7 +17,7 @@ export async function PUT(req: Request) {
     const { id, ...data } = body
     if (!id) return new Response(JSON.stringify({ error: 'Thiếu id' }), { status: 400, headers: { 'content-type': 'application/json' } })
     console.debug('PUT /api/transactions body:', body)
-    // Sanitize incoming data: only allow updatable fields and normalize types
+    // Làm sạch dữ liệu vào: chỉ cho phép các trường có thể cập nhật và chuẩn hóa kiểu
     const updateData: any = {}
     if (data.amount != null) updateData.amount = Number(data.amount)
     if (data.type != null) {
@@ -29,13 +29,25 @@ export async function PUT(req: Request) {
     if (data.categoryId != null) updateData.categoryId = Number(data.categoryId)
     if (data.accountId != null) updateData.accountId = Number(data.accountId)
     if (data.userId != null) updateData.userId = String(data.userId)
+    // Note: approval feature removed from UI/server — ignore any approval fields
+    // (do not forward `approved`, `approvedBy`, `approvedAt` to Prisma)
 
-    const updated = await prisma.transaction.update({ where: { id: Number(id) }, data: updateData })
-    console.debug('PUT /api/transactions updated:', updated)
-    return new Response(JSON.stringify(updated), { status: 200, headers: { 'content-type': 'application/json' } })
+    if (Object.keys(updateData).length === 0) {
+      return new Response(JSON.stringify({ error: 'Không có trường hợp hợp lệ để cập nhật' }), { status: 400, headers: { 'content-type': 'application/json' } })
+    }
+
+    try {
+      const updated = await prisma.transaction.update({ where: { id: Number(id) }, data: updateData })
+      console.debug('PUT /api/transactions updated:', updated)
+      return new Response(JSON.stringify(updated), { status: 200, headers: { 'content-type': 'application/json' } })
+    } catch (innerErr: any) {
+      console.error('PUT /api/transactions prisma update error:', innerErr)
+      const msg = String(innerErr?.message || innerErr || 'Lỗi khi cập nhật giao dịch')
+      return new Response(JSON.stringify({ error: msg }), { status: 500, headers: { 'content-type': 'application/json' } })
+    }
   } catch (err) {
     console.error('PUT /api/transactions error:', err)
-    return new Response(JSON.stringify({ error: 'Lỗi máy chủ nội bộ' }), { status: 500, headers: { 'content-type': 'application/json' } })
+    return new Response(JSON.stringify({ error: String(err?.message || 'Lỗi máy chủ nội bộ') }), { status: 500, headers: { 'content-type': 'application/json' } })
   }
 }
 
@@ -70,7 +82,7 @@ export async function POST(req: Request) {
     const body = await req.json()
     console.debug('POST /api/transactions body:', body)
 
-    // Accept multiple payload shapes from UI/mocks
+    // Chấp nhận nhiều dạng payload từ UI/mocks
     const {
       amount: rawAmount,
       type: rawType,
@@ -85,10 +97,10 @@ export async function POST(req: Request) {
     } = body as any
 
     const amount = Number(rawAmount ?? 0)
-    // normalize type: accept 'thu'|'chi' or 'INCOME'|'EXPENSE'
+    // chuẩn hóa kiểu: chấp nhận 'thu'|'chi' hoặc 'INCOME'|'EXPENSE'
     const type = (rawType === 'thu' || rawType === 'INCOME') ? 'INCOME' : (rawType === 'chi' || rawType === 'EXPENSE') ? 'EXPENSE' : 'EXPENSE'
 
-    // find or create user: prefer email, fall back to performedBy (name)
+    // tìm hoặc tạo user: ưu tiên email, nếu không có dùng performedBy (tên)
     let user = null
     if (userEmail) {
       user = await prisma.user.findUnique({ where: { email: userEmail } })
@@ -96,18 +108,18 @@ export async function POST(req: Request) {
     } else if (performedBy) {
       user = await prisma.user.findFirst({ where: { name: String(performedBy) } })
       if (!user) {
-        // synthesize an email for created user
+        // tạo email tổng hợp cho user được tạo
         const safe = String(performedBy).replace(/\s+/g, '_').toLowerCase()
         const email = `${safe}@local.invalid`
         user = await prisma.user.create({ data: { email, password: 'changeme', name: performedBy } })
       }
     } else {
-      // fallback: use or create an anonymous user
+      // fallback: sử dụng hoặc tạo user ẩn danh
       user = await prisma.user.findFirst()
       if (!user) user = await prisma.user.create({ data: { email: `user_${Date.now()}@local.invalid`, password: 'changeme' } })
     }
 
-    // account: accept accountId (number) or accountName
+    // account: chấp nhận accountId (số) hoặc accountName
     let account = null
     if (accountId != null) {
       account = await prisma.account.findUnique({ where: { id: Number(accountId) } })
@@ -117,17 +129,21 @@ export async function POST(req: Request) {
       account = await prisma.account.upsert({ where: { name }, update: {}, create: { name, initialBalance: 0, currentBalance: 0 } })
     }
 
-    // category: accept numeric id or name
+    // category: chấp nhận id số hoặc tên
     let category = null
     if (categoryId != null) {
-      // try numeric id
+      // thử id dạng số
       const maybeId = Number(categoryId)
       if (!Number.isNaN(maybeId)) category = await prisma.category.findUnique({ where: { id: maybeId } })
     }
     if (!category) {
-      const cname = categoryName || 'Uncategorized'
-      category = await prisma.category.findFirst({ where: { name: cname } })
-      if (!category) category = await prisma.category.create({ data: { name: cname, type: type === 'INCOME' ? 'INCOME' : 'EXPENSE' } })
+      if (categoryName) {
+        const cname = String(categoryName)
+        category = await prisma.category.findFirst({ where: { name: cname } })
+        if (!category) category = await prisma.category.create({ data: { name: cname, type: type === 'INCOME' ? 'INCOME' : 'EXPENSE' } })
+      } else {
+        return new Response(JSON.stringify({ error: 'Thiếu danh mục (categoryId hoặc categoryName)' }), { status: 400, headers: { 'content-type': 'application/json' } })
+      }
     }
 
     const tx = await prisma.transaction.create({

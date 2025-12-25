@@ -2,6 +2,7 @@
 
 import React from "react";
 import type { Transaction, Customer, Category } from "../../../../lib/mockService";
+import { canApproveTransaction, canSoftDelete } from "../../../../lib/permissions";
 import { formatNumberVN, formatVND } from "../../../../lib/format";
 
 type Props = {
@@ -15,7 +16,8 @@ type Props = {
   toggleCustomerReceived: (id: string, val: boolean) => Promise<void> | void;
 };
 
-export default function ReceivedSection({ items, customers, categories, user, startEditTransaction, handleDelete, toggleTransactionReceived, toggleCustomerReceived }: Props) {
+export default function ReceivedSection({ items, customers, categories, user, startEditTransaction, handleDelete, toggleTransactionReceived, handleApprove, toggleCustomerReceived }: Props) {
+  const safeItems = Array.isArray(items) ? items : (console.warn('ReceivedSection: items is not an array', items), [] as typeof items);
   return (
     <div className="bg-white border rounded p-4">
       <h3 className="font-semibold mb-3">Đã thu</h3>
@@ -47,7 +49,7 @@ export default function ReceivedSection({ items, customers, categories, user, st
               </tr>
             </thead>
             <tbody>
-              {items.filter((it) => it.received).map((it, i) => (
+              {safeItems.filter((it) => it.received).map((it, i) => (
                 <tr key={`${String(it.id ?? '')}-${i}`} className="border-t">
                   <td className="p-3 whitespace-normal break-words">{it.date ? new Date(it.date).toLocaleString() : "-"}</td>
                   <td className="p-3 whitespace-normal break-words">{it.performedBy ?? user?.name ?? "-"}</td>
@@ -57,8 +59,9 @@ export default function ReceivedSection({ items, customers, categories, user, st
                   <td className="p-3 whitespace-normal break-words">{categories.find((c) => String(c.id) === String(it.categoryId))?.name ?? "-"}</td>
                   <td className="p-3 text-center">
                     <button className="text-blue-600 mr-2" onClick={() => startEditTransaction(it)}>Sửa</button>
-                    {user?.role === 'admin' ? <button className="text-red-600" onClick={() => handleDelete(it.id)}>Xóa</button> : '-'}
+                    {canSoftDelete(user) ? <button className="text-red-600" onClick={() => handleDelete(it.id)}>Xóa</button> : '-'}
                   </td>
+                  
                   <td className="p-3 text-center">
                     <input type="checkbox" checked={Boolean(it.received)} onChange={(e) => toggleTransactionReceived(it.id, e.target.checked)} />
                   </td>

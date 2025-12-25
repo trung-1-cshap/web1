@@ -65,6 +65,17 @@ export default function useCustomers(user?: any, setFlashMsg?: (s: string | null
     if (updated) setCustomers((s) => s.map((c) => String(c.id) === String(updated.id) ? updated : c));
   }
 
+  async function handleApproveCustomer(id: string) {
+    const approver = user?.name ?? user?.email ?? 'system';
+    try {
+      const updated = await updateCustomer(id, { approved: true, approvedBy: approver, approvedAt: new Date().toISOString() });
+      if (updated) setCustomers((s) => s.map((c) => String(c.id) === String(updated.id) ? updated : c));
+    } catch (err) {
+      console.error('approve customer failed', err);
+      alert('Duyệt khách hàng thất bại');
+    }
+  }
+
   function startEditCustomer(c: Customer) {
     setEditingCustomerId(String(c.id));
     // Prefill edit data including tiền và hoa hồng để không làm mất giá trị khi sửa
@@ -195,6 +206,7 @@ export default function useCustomers(user?: any, setFlashMsg?: (s: string | null
     handleAddCustomer,
     handleDeleteCustomer,
     toggleCustomerReceived,
+    handleApproveCustomer,
     startEditCustomer,
     cancelEditCustomer,
     saveEditCustomer,

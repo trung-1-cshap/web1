@@ -9,7 +9,7 @@ async function ensureDataFile() {
     await fs.mkdir(path.dirname(DATA_FILE), { recursive: true })
     await fs.access(DATA_FILE)
   } catch (e) {
-    // create empty array file
+    // tạo file mảng rỗng
     await fs.writeFile(DATA_FILE, JSON.stringify([]), 'utf8')
   }
 }

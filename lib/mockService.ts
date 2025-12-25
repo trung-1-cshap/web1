@@ -8,7 +8,7 @@ type Category = {
 let categories: Category[] = [];
 
 export function getCategories(): Promise<Category[]> {
-  // fetch from API if available
+  // lấy từ API nếu có
   if (typeof window !== 'undefined') {
     return fetch('/api/categories').then((r) => r.json())
   }
@@ -25,9 +25,9 @@ export function addCategory(payload: Omit<Category, "id">): Promise<Category> {
 }
 
 export function updateCategory(id: string, payload: Partial<Category>): Promise<Category | null> {
-  // client-side update via API not implemented on server; fall back to in-memory
+  // cập nhật phía client qua API chưa được triển khai trên server; dùng bộ nhớ trong thay thế
   if (typeof window !== 'undefined') {
-    // no PUT endpoint for categories yet; emulate optimistic update by returning payload
+    // chưa có endpoint PUT cho categories; giả lập cập nhật lạc quan bằng cách trả về payload
     return fetch('/api/categories', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id, ...payload }) }).then((r) => r.json())
   }
   let updated: Category | null = null;
@@ -52,7 +52,7 @@ export function deleteCategory(id: string): Promise<boolean> {
 
 export type { Category };
 
-// Transactions and Accounts (in-memory)
+// Giao dịch và Tài khoản (trong bộ nhớ)
 type Transaction = {
   id: string;
   date: string; // ISO
@@ -61,16 +61,32 @@ type Transaction = {
   categoryId?: string;
   description?: string;
   accountId?: string;
-  performedBy?: string; // user who entered the transaction
-  actorName?: string; // person who received/paid (entered by user)
+  performedBy?: string; // người dùng đã nhập giao dịch
+  actorName?: string; // người nhận/thanh toán (được nhập bởi người dùng)
   received?: boolean; // đã thu
+  approved?: boolean; // đã duyệt
+  approvedBy?: string | null;
+  approvedAt?: string | null;
 };
 
 let transactions: Transaction[] = [];
 
 export function getTransactions(): Promise<Transaction[]> {
   if (typeof window !== 'undefined') {
-    return fetch('/api/transactions').then((r) => r.json())
+    return fetch('/api/transactions').then(async (r) => {
+      const text = await r.text().catch(() => '')
+      let json: any = {}
+      try {
+        json = text ? JSON.parse(text) : {}
+      } catch (e) {
+        json = { _raw: text }
+      }
+      if (!r.ok) {
+        console.error('getTransactions failed', { status: r.status, statusText: r.statusText, body: json })
+        throw new Error(json?.error || JSON.stringify(json) || `HTTP ${r.status} ${r.statusText}`)
+      }
+      return json
+    })
   }
   return Promise.resolve([...transactions]);
 }
@@ -87,22 +103,29 @@ export function addTransaction(payload: Omit<Transaction, "id">): Promise<Transa
         return json;
       })
   }
-  const t: Transaction = { id: `t${Date.now()}`, ...payload };
+  const t: Transaction = { id: `t${Date.now()}`, approved: false, approvedBy: null, approvedAt: null, ...payload };
   transactions = [t, ...transactions];
   return Promise.resolve(t);
 }
 
 export function updateTransaction(id: string, payload: Partial<Transaction>): Promise<Transaction | null> {
   if (typeof window !== 'undefined') {
-    return fetch('/api/transactions', { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id, ...payload }) })
+    // sanitize payload: server may not accept approval fields or other private props
+    const safePayload: any = { ...(payload || {}) };
+    delete safePayload.approved;
+    delete safePayload.approvedBy;
+    delete safePayload.approvedAt;
+    return fetch('/api/transactions', { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id, ...safePayload }) })
       .then(async (r) => {
-        const json = await r.json().catch(() => ({}));
+        const text = await r.text().catch(() => '')
+        let json: any = {}
+        try { json = text ? JSON.parse(text) : {} } catch { json = { _raw: text } }
         if (!r.ok) {
-          console.error('updateTransaction failed', { status: r.status, statusText: r.statusText, body: json });
-          const msg = json?.error || JSON.stringify(json) || `HTTP ${r.status} ${r.statusText}`;
-          throw new Error(msg);
+          console.error('updateTransaction failed', { status: r.status, statusText: r.statusText, body: json })
+          const msg = json?.error || JSON.stringify(json) || `HTTP ${r.status} ${r.statusText}`
+          throw new Error(msg)
         }
-        return json;
+        return json
       })
   }
   let updated: Transaction | null = null;
@@ -121,19 +144,23 @@ export function deleteTransaction(id: string): Promise<boolean> {
     return fetch('/api/transactions', { method: 'DELETE', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id }) })
       .then(async (r) => {
         const text = await r.text().catch(() => '')
-        let json: any = {}
+        let parsed: any = undefined
         try {
-          json = text ? JSON.parse(text) : {}
+          parsed = text ? JSON.parse(text) : undefined
         } catch {
-          json = { _raw: text }
+          parsed = undefined
         }
+        const bodyForLog = parsed ?? (text ? { _raw: text } : undefined)
         if (!r.ok) {
-          console.error('deleteTransaction failed', { status: r.status, statusText: r.statusText, body: json })
-          // If server reports not found, treat as deleted (idempotent delete)
+          console.error('deleteTransaction failed', { status: r.status, statusText: r.statusText, body: bodyForLog })
+          // Nếu server báo không tìm thấy, coi như đã bị xóa (delete idempotent)
           if (r.status === 404) return false
-          throw new Error(json?.error || JSON.stringify(json) || `HTTP ${r.status} ${r.statusText}`)
+          const errMsg = parsed?.error ?? (parsed ? JSON.stringify(parsed) : (text || `HTTP ${r.status} ${r.statusText}`))
+          throw new Error(errMsg)
         }
-        return Boolean(json.ok ?? true)
+        // Trường hợp server trả r.ok nhưng không có body — coi là thành công
+        if (parsed === undefined) return true
+        return Boolean(parsed.ok ?? true)
       })
   }
   const before = transactions.length;
@@ -194,6 +221,9 @@ type Customer = {
   contractAmount?: number; // tiền hợp đồng
   commission?: number; // hoa hồng
   received?: boolean; // đã thu
+  approved?: boolean;
+  approvedBy?: string | null;
+  approvedAt?: string | null;
   note?: string;
   createdAt?: string;
   performedBy?: string;
@@ -212,7 +242,7 @@ export function addCustomer(payload: Omit<Customer, "id">): Promise<Customer> {
   if (typeof window !== 'undefined') {
     return fetch('/api/customers', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload) }).then((r) => r.json())
   }
-  const c: Customer = { id: `u${Date.now()}`, ...payload };
+  const c: Customer = { id: `u${Date.now()}`, approved: false, approvedBy: null, approvedAt: null, ...payload };
   customers = [c, ...customers];
   return Promise.resolve(c);
 }

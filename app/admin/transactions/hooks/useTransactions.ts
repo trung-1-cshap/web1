@@ -19,7 +19,14 @@ export default function useTransactions(user?: any) {
   const [flashMsg, setFlashMsg] = useState<string | null>(null);
 
   useEffect(() => {
-    getTransactions().then(setItems).catch(() => {});
+    getTransactions().then((res) => {
+      if (Array.isArray(res)) {
+        setItems(res);
+      } else {
+        console.warn('useTransactions: getTransactions returned non-array', res);
+        setItems([]);
+      }
+    }).catch(() => {});
     getCategories().then((c) => {
       setCategories(c);
       if (c.length) setCategoryId(c[0].id);
@@ -77,8 +84,19 @@ export default function useTransactions(user?: any) {
     const updated = await updateTransaction(id, { received: val });
     if (updated) setItems((s) => s.map((t) => String(t.id) === String(updated.id) ? updated : t));
   }
+
+  async function handleApprove(id: string) {
+    const approver = user?.name ?? user?.email ?? 'system';
+    try {
+      const updated = await updateTransaction(id, { approved: true, approvedBy: approver, approvedAt: new Date().toISOString() });
+      if (updated) setItems((s) => s.map((t) => String(t.id) === String(updated.id) ? updated : t));
+    } catch (err) {
+      console.error('approve transaction failed', err);
+      alert('Duyệt giao dịch thất bại');
+    }
+  }
  
-  // compose customer and trash hooks
+  // kết hợp các hook customers và trash
   const customersApi = useCustomers(user, setFlashMsg);
   const trashApi = useTrash(items, setItems, user, setFlashMsg);
 

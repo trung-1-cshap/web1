@@ -59,6 +59,11 @@ model Transaction {
   type        TransactionType
   date        DateTime        @default(now())
   description String?
+
+  // Approval fields
+  approved    Boolean         @default(false)
+  approvedAt  DateTime?
+  approvedBy  String?
   
   // Relations
   categoryId  Int

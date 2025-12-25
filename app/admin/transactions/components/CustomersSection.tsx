@@ -3,6 +3,7 @@
 import React from "react";
 import type { Customer } from "../../../../lib/mockService";
 import { formatNumberVN } from "../../../../lib/format";
+import { canSoftDelete, canExport, canApproveTransaction } from "../../../../lib/permissions";
 
 // CustomersSection: giao diện quản lý khách hàng
 // - Form thêm khách hàng
@@ -39,10 +40,17 @@ type Props = {
   saveEditCustomer: () => Promise<void>;
   handleDeleteCustomer: (id: string) => Promise<void>;
   toggleCustomerReceived: (id: string, val: boolean) => Promise<void>;
+  handleApproveCustomer?: (id: string) => Promise<void> | void;
   user?: any;
 };
 
-export default function CustomersSection({ customers, custName, setCustName, custPhone, setCustPhone, custDateType, setCustDateType, custDate, setCustDate, custDepositAmount, setCustDepositAmount, custContractAmount, setCustContractAmount, custCommission, setCustCommission, handleAddCustomer, handleExportExcel, editingCustomerId, editCustomerData, setEditCustomerData, startEditCustomer, cancelEditCustomer, saveEditCustomer, handleDeleteCustomer, toggleCustomerReceived, user }: Props) {
+export default function CustomersSection({ customers, custName, setCustName, custPhone, setCustPhone, custDateType, setCustDateType, custDate, setCustDate, custDepositAmount, setCustDepositAmount, custContractAmount, setCustContractAmount, custCommission, setCustCommission, handleAddCustomer, handleExportExcel, editingCustomerId, editCustomerData, setEditCustomerData, startEditCustomer, cancelEditCustomer, saveEditCustomer, handleDeleteCustomer, toggleCustomerReceived, handleApproveCustomer, user }: Props) {
+  const [nameError, setNameError] = React.useState<string | null>(null);
+  const [phoneError, setPhoneError] = React.useState<string | null>(null);
+  const [editNameError, setEditNameError] = React.useState<string | null>(null);
+  const [editPhoneError, setEditPhoneError] = React.useState<string | null>(null);
+  const [dateError, setDateError] = React.useState<string | null>(null);
+  const [editDateError, setEditDateError] = React.useState<string | null>(null);
   const [depositFocused, setDepositFocused] = React.useState(false);
   const [contractFocused, setContractFocused] = React.useState(false);
   const [editDepositFocused, setEditDepositFocused] = React.useState(false);
@@ -62,14 +70,14 @@ export default function CustomersSection({ customers, custName, setCustName, cus
     return formatted.length;
   }
 
-  const handleLiveChange = (rawSetter: (v: string) => void, ref: React.RefObject<HTMLInputElement> | null, valueStr: string | undefined, e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleLiveChange = (rawSetter: (v: string) => void, ref: React.RefObject<HTMLInputElement | null> | null, valueStr: string | undefined, e: React.ChangeEvent<HTMLInputElement>) => {
     const el = e.target as HTMLInputElement;
     const sel = typeof el.selectionStart === 'number' ? el.selectionStart : el.value.length;
     const raw = String(el.value).replace(/[^0-9]/g, '');
     rawSetter(raw);
     const digitsBefore = (el.value.slice(0, sel).match(/\d/g) || []).length;
     const formatted = raw ? formatNumberVN(Number(raw)) : '';
-    // schedule caret restore after render
+    // đặt lịch khôi phục vị trí con trỏ sau khi render
     setTimeout(() => {
       try {
         const pos = findCaretPos(formatted, digitsBefore);
@@ -96,14 +104,53 @@ export default function CustomersSection({ customers, custName, setCustName, cus
     <div className="bg-white border rounded p-4">
       <h3 className="font-semibold mb-3">Thêm khách hàng</h3>
       {/* Form thêm khách hàng: nhập tên, số điện thoại, ngày (cọc/hd), số tiền và hoa hồng */}
-      <form onSubmit={handleAddCustomer} className="flex flex-wrap gap-2 mb-4">
-        <input type="text" className="border rounded px-3 py-2 flex-1" placeholder="Tên khách hàng" value={custName} onChange={(e) => setCustName(e.target.value)} />
-        <input type="text" className="border rounded px-3 py-2" placeholder="SĐT" value={custPhone} onChange={(e) => setCustPhone(e.target.value)} />
+      <form onSubmit={(e) => {
+        e.preventDefault();
+        // kiểm tra cuối trước khi submit
+        if (!custName || nameError) { setNameError(nameError ?? 'Tên không hợp lệ'); return; }
+        if (custPhone && phoneError) { setPhoneError(phoneError ?? 'Số điện thoại không hợp lệ'); return; }
+        handleAddCustomer(e);
+      }} className="flex flex-wrap gap-2 mb-4">
+        <div className="flex-1">
+          <input type="text" className="border rounded px-3 py-2 w-full" placeholder="Tên khách hàng" value={custName} onChange={(e) => {
+            const v = e.target.value;
+            // cho phép chữ, dấu phụ, khoảng trắng, dấu nháy đơn, dấu chấm, dấu gạch ngang
+            const valid = /^[\p{L}\p{M}\s'.-]*$/u.test(v);
+            if (!valid) setNameError('Tên không được chứa ký tự đặc biệt'); else setNameError(null);
+            setCustName(v);
+          }} />
+          {nameError ? <div className="text-red-600 text-sm mt-1">{nameError}</div> : null}
+        </div>
+        <div>
+          <input type="text" className="border rounded px-3 py-2" placeholder="SĐT" value={custPhone} onChange={(e) => {
+            const v = e.target.value;
+            // phát hiện ký tự không phải chữ số
+            const hasNonDigit = /\D/.test(v);
+            if (hasNonDigit) setPhoneError('Số điện thoại chỉ được nhập chữ số'); else setPhoneError(null);
+            // chỉ giữ chữ số trong giá trị lưu
+            setCustPhone(v.replace(/\D/g, ''));
+          }} />
+          {phoneError ? <div className="text-red-600 text-sm mt-1">{phoneError}</div> : null}
+        </div>
         <select className="border rounded px-3 py-2" value={custDateType} onChange={(e) => setCustDateType(e.target.value as any)}>
           <option value="deposit">Ngày Cọc</option>
           <option value="contract">Ngày ký hợp đồng</option>
         </select>
-        <input type="date" className="border rounded px-3 py-2" value={custDate} onChange={(e) => setCustDate(e.target.value)} />
+        <input type="date" className="border rounded px-3 py-2" value={custDate} onChange={(e) => {
+          const v = e.target.value;
+          if (v) {
+            const y = new Date(v).getFullYear();
+            if (isFinite(y) && y > 3000) {
+              setDateError('Năm không được lớn hơn 3000');
+            } else {
+              setDateError(null);
+            }
+          } else {
+            setDateError(null);
+          }
+          setCustDate(v);
+        }} />
+        {dateError ? <div className="text-red-600 text-sm mt-1">{dateError}</div> : null}
         {custDateType === 'deposit' && (
           <>
             <input
@@ -143,7 +190,9 @@ export default function CustomersSection({ customers, custName, setCustName, cus
 
       <div className="flex justify-end mb-2">
         {/* Nút Xuất Excel: xuất toàn bộ danh sách khách hàng hiện tại */}
-        <button type="button" onClick={handleExportExcel} className="bg-green-600 text-white px-4 py-2 rounded">Xuất Excel</button>
+        {canExport(user) ? (
+          <button type="button" onClick={handleExportExcel} className="bg-green-600 text-white px-4 py-2 rounded">Xuất Excel</button>
+        ) : null}
       </div>
       {/* Danh sách khách hàng: hiển thị bảng, cho phép sửa/xóa/đánh dấu đã thu */}
       <div className="bg-white border rounded">
@@ -184,9 +233,41 @@ export default function CustomersSection({ customers, custName, setCustName, cus
                   {/* Nếu đang ở trạng thái sửa: hiển thị row editable */}
                   {String(c.id) === editingCustomerId ? (
                     <>
-                      <td className="p-3"><input className="border px-2 py-1 w-48" value={String(editCustomerData.name ?? '')} onChange={(e) => setEditCustomerData((p) => ({ ...(p || {}), name: e.target.value }))} /></td>
-                      <td className="p-3"><input className="border px-2 py-1 w-40" value={String(editCustomerData.phone ?? '')} onChange={(e) => setEditCustomerData((p) => ({ ...(p || {}), phone: e.target.value }))} /></td>
-                      <td className="p-3"><input type="date" className="border px-2 py-1 w-40" value={editCustomerData.depositDate ? new Date(editCustomerData.depositDate).toISOString().slice(0,10) : (editCustomerData.contractDate ? new Date(editCustomerData.contractDate).toISOString().slice(0,10) : '')} onChange={(e) => setEditCustomerData((p) => ({ ...(p || {}), depositDate: e.target.value ? new Date(e.target.value).toISOString() : '' }))} /></td>
+                      <td className="p-3">
+                        <div>
+                          <input className="border px-2 py-1 w-48" value={String(editCustomerData.name ?? '')} onChange={(e) => {
+                            const v = e.target.value;
+                            const valid = /^[\p{L}\p{M}\s'.-]*$/u.test(v);
+                            if (!valid) setEditNameError('Tên không được chứa ký tự đặc biệt'); else setEditNameError(null);
+                            setEditCustomerData((p) => ({ ...(p || {}), name: v }));
+                          }} />
+                          {editNameError ? <div className="text-red-600 text-sm mt-1">{editNameError}</div> : null}
+                        </div>
+                      </td>
+                      <td className="p-3">
+                        <div>
+                          <input className="border px-2 py-1 w-40" value={String(editCustomerData.phone ?? '')} onChange={(e) => {
+                            const v = e.target.value;
+                            const hasNonDigit = /\D/.test(v);
+                            if (hasNonDigit) setEditPhoneError('Số điện thoại chỉ được nhập chữ số'); else setEditPhoneError(null);
+                            setEditCustomerData((p) => ({ ...(p || {}), phone: String(v).replace(/\D/g, '') }));
+                          }} />
+                          {editPhoneError ? <div className="text-red-600 text-sm mt-1">{editPhoneError}</div> : null}
+                        </div>
+                      </td>
+                      <td className="p-3">
+                        <div>
+                          <input type="date" className="border px-2 py-1 w-40" value={editCustomerData.depositDate ? new Date(editCustomerData.depositDate).toISOString().slice(0,10) : (editCustomerData.contractDate ? new Date(editCustomerData.contractDate).toISOString().slice(0,10) : '')} onChange={(e) => {
+                            const v = e.target.value;
+                            if (v) {
+                              const y = new Date(v).getFullYear();
+                              if (isFinite(y) && y > 3000) setEditDateError('Năm không được lớn hơn 3000'); else setEditDateError(null);
+                            } else setEditDateError(null);
+                            setEditCustomerData((p) => ({ ...(p || {}), depositDate: v ? new Date(v).toISOString() : '' }));
+                          }} />
+                          {editDateError ? <div className="text-red-600 text-sm mt-1">{editDateError}</div> : null}
+                        </div>
+                      </td>
                       <td className="p-3">
                         <input
                           ref={editDepositRef}
@@ -198,7 +279,7 @@ export default function CustomersSection({ customers, custName, setCustName, cus
                           onFocus={() => setEditDepositFocused(true)}
                           onBlur={() => setEditDepositFocused(false)}
                           onChange={(e) => {
-                            // use live change with caret preservation
+                            // dùng thay đổi trực tiếp với bảo toàn vị trí con trỏ
                             const el = e.target as HTMLInputElement;
                             const sel = typeof el.selectionStart === 'number' ? el.selectionStart : el.value.length;
                             const raw = String(el.value).replace(/[^0-9]/g, '');
@@ -247,7 +328,13 @@ export default function CustomersSection({ customers, custName, setCustName, cus
                       <td className="p-3">{c.createdAt ? new Date(c.createdAt).toLocaleString() : '-'}</td>
                       <td className="p-3">{c.performedBy ?? '-'}</td>
                       <td className="p-3 text-center">
-                        <button className="text-green-600 mr-2" onClick={saveEditCustomer}>Lưu</button>
+                        <button className="text-green-600 mr-2" onClick={() => {
+                          if (editNameError || editPhoneError || editDateError) {
+                            alert('Vui lòng sửa các lỗi trước khi lưu');
+                            return;
+                          }
+                          saveEditCustomer();
+                        }} disabled={Boolean(editNameError || editPhoneError || editDateError)}>Lưu</button>
                         <button className="text-gray-600" onClick={cancelEditCustomer}>Hủy</button>
                       </td>
                       {/* Checkbox 'Đã thu' khi đang sửa: lưu vào editCustomerData (chưa gửi server) */}
@@ -269,7 +356,12 @@ export default function CustomersSection({ customers, custName, setCustName, cus
                       {/* Hành động: Sửa (bật form chỉnh sửa trên hàng), Xóa (chỉ admin) */}
                       <td className="p-3 text-center">
                         <button className="text-blue-600 mr-2" onClick={() => startEditCustomer(c)}>Sửa</button>
-                        {user?.role !== 'user' ? <button className="text-red-600" onClick={() => handleDeleteCustomer(c.id)}>Xóa</button> : null}
+                        {canSoftDelete(user) ? <button className="text-red-600" onClick={() => handleDeleteCustomer(c.id)}>Xóa</button> : null}
+                        {c.approved ? (
+                          <div className="text-sm text-green-700 mt-1">Đã duyệt{c.approvedBy ? ` bởi ${c.approvedBy}` : ''}</div>
+                        ) : canApproveTransaction(user) ? (
+                          <button className="text-green-700 mt-1" onClick={() => (typeof handleApproveCustomer === 'function') && handleApproveCustomer(String(c.id))}>Duyệt</button>
+                        ) : null}
                       </td>
                       {/* Checkbox 'Đã thu' trực tiếp: gọi toggleCustomerReceived để cập nhật */}
                       <td className="p-3 text-center">

@@ -19,7 +19,7 @@ export default function AdminUsersPage() {
       router.push('/login');
       return;
     }
-    // Previously this page was admin-only; role check removed so any authenticated user can access
+    // Trước đây trang này chỉ dành cho admin; kiểm tra vai trò đã bị bỏ để bất kỳ người dùng đã xác thực nào cũng có thể truy cập
 
     async function load() {
       setLoading(true);
@@ -73,7 +73,7 @@ export default function AdminUsersPage() {
   function handleRevealPassword(email: string) {
     if (!user || user.role !== 'admin') return alert('Không có quyền');
     if (!email) return;
-    // Do not reveal passwords for admin users
+    // Không hiển thị mật khẩu cho người dùng admin
     const target = selectedUser;
     if (target && target.role === 'admin') return alert('Không được hiển thị mật khẩu của admin khác');
     const p = getUserPassword(email);
