@@ -112,7 +112,7 @@ export default function TransactionsPage() {
           startEditTransaction={startEditTransaction}
           handleDelete={handleDelete}
           toggleTransactionReceived={toggleTransactionReceived}
-          handleApprove={handleApprove}
+          
           toggleCustomerReceived={toggleCustomerReceived}
         />
       </div>
@@ -181,7 +181,7 @@ export default function TransactionsPage() {
           saveEditTransaction={saveEditTransaction}
           toggleTransactionReceived={toggleTransactionReceived}
           handleDelete={handleDelete}
-          handleApprove={handleApprove}
+          
         />
       </div>
       
