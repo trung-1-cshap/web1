@@ -47,7 +47,7 @@ export async function PUT(req: Request) {
     }
   } catch (err) {
     console.error('PUT /api/transactions error:', err)
-    return new Response(JSON.stringify({ error: String(err?.message || 'Lỗi máy chủ nội bộ') }), { status: 500, headers: { 'content-type': 'application/json' } })
+    return new Response(JSON.stringify({ error: String((err as any)?.message || 'Lỗi máy chủ nội bộ') }), { status: 500, headers: { 'content-type': 'application/json' } })
   }
 }
 

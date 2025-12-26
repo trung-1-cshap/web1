@@ -124,6 +124,7 @@ export default function useTransactions(user?: any) {
     cancelEditTransaction,
     saveEditTransaction,
     toggleTransactionReceived,
+    handleApprove,
     // customers api
     ...customersApi,
     // trash api
