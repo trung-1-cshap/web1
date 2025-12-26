@@ -14,7 +14,7 @@ type Props = {
   handleDelete: (id: string) => Promise<void> | void;
   toggleTransactionReceived: (id: string, val: boolean) => Promise<void> | void;
   toggleCustomerReceived: (id: string, val: boolean) => Promise<void> | void;
-  handleApprove?: (id: string) => Promise<void> | void;
+  
 };
 
 export default function ReceivedSection({
@@ -25,9 +25,9 @@ export default function ReceivedSection({
   startEditTransaction,
   handleDelete,
   toggleTransactionReceived,
-  handleApprove,
   toggleCustomerReceived,
 }: Props)
+
  {
   const safeItems: Transaction[] = Array.isArray(items) ? items : [];
 
