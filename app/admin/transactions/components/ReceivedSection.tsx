@@ -25,7 +25,8 @@ export default function ReceivedSection({
   handleDelete,
   toggleTransactionReceived,
   toggleCustomerReceived,
-}: Props) {
+}: Props)
+ {
   const safeItems: Transaction[] = Array.isArray(items) ? items : [];
 
   return (
