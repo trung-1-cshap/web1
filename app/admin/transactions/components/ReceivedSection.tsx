@@ -14,6 +14,7 @@ type Props = {
   handleDelete: (id: string) => Promise<void> | void;
   toggleTransactionReceived: (id: string, val: boolean) => Promise<void> | void;
   toggleCustomerReceived: (id: string, val: boolean) => Promise<void> | void;
+  handleApprove?: (id: string) => Promise<void> | void;
 };
 
 export default function ReceivedSection({
@@ -24,6 +25,7 @@ export default function ReceivedSection({
   startEditTransaction,
   handleDelete,
   toggleTransactionReceived,
+  handleApprove,
   toggleCustomerReceived,
 }: Props)
  {
@@ -62,8 +64,8 @@ export default function ReceivedSection({
                     <td className="p-3">{it.actorName ?? "-"}</td>
                     <td className="p-3">{it.amount != null ? formatNumberVN(it.amount) : "-"}</td>
                     <td className="p-3">
-                      {it.type === "INCOME" || it.type === "thu" ? "Thu" :
-                       it.type === "EXPENSE" || it.type === "chi" ? "Chi" : it.type}
+                      {String(it.type) === "INCOME" || String(it.type) === "thu" ? "Thu" :
+                       String(it.type) === "EXPENSE" || String(it.type) === "chi" ? "Chi" : String(it.type)}
                     </td>
                     <td className="p-3">
                       {categories.find((c) => String(c.id) === String(it.categoryId))?.name ?? "-"}
