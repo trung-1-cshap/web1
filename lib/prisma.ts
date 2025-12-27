@@ -1,15 +1,17 @@
 import { PrismaClient } from "@prisma/client";
 
-const globalForPrisma = global as unknown as {
-  prisma?: PrismaClient;
-};
+declare global {
+  // eslint-disable-next-line no-var
+  var __prisma: PrismaClient | undefined;
+}
 
-export const prisma =
-  globalForPrisma.prisma ??
-  new PrismaClient({
-    log: ["error"],
-  });
-
-if (process.env.NODE_ENV !== "production") {
-  globalForPrisma.prisma = prisma;
+/**
+ * KHÔNG khởi tạo Prisma ngay khi build
+ * Chỉ khởi tạo khi runtime thực sự cần
+ */
+export function getPrisma() {
+  if (!global.__prisma) {
+    global.__prisma = new PrismaClient();
+  }
+  return global.__prisma;
 }
