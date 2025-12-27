@@ -14,7 +14,6 @@ type Props = {
   handleDelete: (id: string) => Promise<void> | void;
   toggleTransactionReceived: (id: string, val: boolean) => Promise<void> | void;
   toggleCustomerReceived: (id: string, val: boolean) => Promise<void> | void;
-  
 };
 
 export default function ReceivedSection({
@@ -26,10 +25,11 @@ export default function ReceivedSection({
   handleDelete,
   toggleTransactionReceived,
   toggleCustomerReceived,
-}: Props)
-
- {
+}: Props) {
+  // ✅ bảo vệ tuyệt đối
   const safeItems: Transaction[] = Array.isArray(items) ? items : [];
+  const safeCustomers: Customer[] = Array.isArray(customers) ? customers : [];
+  const safeCategories: Category[] = Array.isArray(categories) ? categories : [];
 
   return (
     <div className="bg-white border rounded p-4">
@@ -56,26 +56,41 @@ export default function ReceivedSection({
 
             <tbody>
               {safeItems
-                .filter((it) => it.received)
+                .filter((it) => Boolean(it.received))
                 .map((it, i) => (
                   <tr key={`${it.id}-${i}`} className="border-t">
-                    <td className="p-3">{it.date ? new Date(it.date).toLocaleString() : "-"}</td>
+                    <td className="p-3">
+                      {it.date ? new Date(it.date).toLocaleString() : "-"}
+                    </td>
                     <td className="p-3">{it.performedBy ?? user?.name ?? "-"}</td>
                     <td className="p-3">{it.actorName ?? "-"}</td>
-                    <td className="p-3">{it.amount != null ? formatNumberVN(it.amount) : "-"}</td>
                     <td className="p-3">
-                      {String(it.type) === "INCOME" || String(it.type) === "thu" ? "Thu" :
-                       String(it.type) === "EXPENSE" || String(it.type) === "chi" ? "Chi" : String(it.type)}
+                      {it.amount != null ? formatNumberVN(it.amount) : "-"}
                     </td>
                     <td className="p-3">
-                      {categories.find((c) => String(c.id) === String(it.categoryId))?.name ?? "-"}
+                      {String(it.type) === "INCOME" || String(it.type) === "thu"
+                        ? "Thu"
+                        : String(it.type) === "EXPENSE" || String(it.type) === "chi"
+                        ? "Chi"
+                        : String(it.type)}
+                    </td>
+                    <td className="p-3">
+                      {safeCategories.find(
+                        (c) => String(c.id) === String(it.categoryId)
+                      )?.name ?? "-"}
                     </td>
                     <td className="p-3 text-center">
-                      <button className="text-blue-600 mr-2" onClick={() => startEditTransaction(it)}>
+                      <button
+                        className="text-blue-600 mr-2"
+                        onClick={() => startEditTransaction(it)}
+                      >
                         Sửa
                       </button>
                       {canSoftDelete(user) ? (
-                        <button className="text-red-600" onClick={() => handleDelete(it.id)}>
+                        <button
+                          className="text-red-600"
+                          onClick={() => handleDelete(it.id)}
+                        >
                           Xóa
                         </button>
                       ) : (
@@ -86,7 +101,9 @@ export default function ReceivedSection({
                       <input
                         type="checkbox"
                         checked={Boolean(it.received)}
-                        onChange={(e) => toggleTransactionReceived(it.id, e.target.checked)}
+                        onChange={(e) =>
+                          toggleTransactionReceived(it.id, e.target.checked)
+                        }
                       />
                     </td>
                   </tr>
@@ -118,8 +135,8 @@ export default function ReceivedSection({
             </thead>
 
             <tbody>
-              {customers
-                .filter((c) => c.received)
+              {safeCustomers
+                .filter((c) => Boolean(c.received))
                 .map((c, i) => (
                   <tr key={`${c.id}-${i}`} className="border-t">
                     <td className="p-3">{c.name}</td>
@@ -131,10 +148,19 @@ export default function ReceivedSection({
                         ? new Date(c.contractDate).toLocaleDateString()
                         : "-"}
                     </td>
-                    <td className="p-3">{c.depositAmount != null ? formatVND(c.depositAmount) : "-"}</td>
-                    <td className="p-3">{c.contractAmount != null ? formatVND(c.contractAmount) : "-"}</td>
                     <td className="p-3">
-                      {c.commission != null && (c.contractAmount ?? c.depositAmount) != null
+                      {c.depositAmount != null
+                        ? formatVND(c.depositAmount)
+                        : "-"}
+                    </td>
+                    <td className="p-3">
+                      {c.contractAmount != null
+                        ? formatVND(c.contractAmount)
+                        : "-"}
+                    </td>
+                    <td className="p-3">
+                      {c.commission != null &&
+                      (c.contractAmount ?? c.depositAmount) != null
                         ? formatVND(
                             Math.round(
                               Number(c.contractAmount ?? c.depositAmount) *
@@ -143,14 +169,22 @@ export default function ReceivedSection({
                           )
                         : "-"}
                     </td>
-                    <td className="p-3">{c.commission != null ? `${c.commission}%` : "-"}</td>
-                    <td className="p-3">{c.createdAt ? new Date(c.createdAt).toLocaleString() : "-"}</td>
+                    <td className="p-3">
+                      {c.commission != null ? `${c.commission}%` : "-"}
+                    </td>
+                    <td className="p-3">
+                      {c.createdAt
+                        ? new Date(c.createdAt).toLocaleString()
+                        : "-"}
+                    </td>
                     <td className="p-3">{c.performedBy ?? "-"}</td>
                     <td className="p-3 text-center">
                       <input
                         type="checkbox"
                         checked={Boolean(c.received)}
-                        onChange={(e) => toggleCustomerReceived(c.id, e.target.checked)}
+                        onChange={(e) =>
+                          toggleCustomerReceived(c.id, e.target.checked)
+                        }
                       />
                     </td>
                   </tr>
