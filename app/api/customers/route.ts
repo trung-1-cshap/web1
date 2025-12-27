@@ -3,7 +3,7 @@ import { getPrisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
 
-// ================= GET =================
+/* ================= GET ================= */
 export async function GET() {
   try {
     const prisma = getPrisma();
@@ -17,7 +17,7 @@ export async function GET() {
   }
 }
 
-// ================= POST =================
+/* ================= POST ================= */
 export async function POST(req: Request) {
   try {
     const prisma = getPrisma();
@@ -34,34 +34,16 @@ export async function POST(req: Request) {
       data: {
         name: String(body.name),
         phone: body.phone ? String(body.phone) : null,
-
-        depositDate: body.depositDate
-          ? new Date(body.depositDate)
-          : null,
-
-        contractDate: body.contractDate
-          ? new Date(body.contractDate)
-          : null,
-
+        depositDate: body.depositDate ? new Date(body.depositDate) : null,
+        contractDate: body.contractDate ? new Date(body.contractDate) : null,
         depositAmount:
-          body.depositAmount != null
-            ? Number(body.depositAmount)
-            : null,
-
+          body.depositAmount != null ? Number(body.depositAmount) : null,
         contractAmount:
-          body.contractAmount != null
-            ? Number(body.contractAmount)
-            : null,
-
+          body.contractAmount != null ? Number(body.contractAmount) : null,
         commission:
-          body.commission != null
-            ? Number(body.commission)
-            : null,
-
+          body.commission != null ? Number(body.commission) : null,
         received: Boolean(body.received),
-        performedBy: body.performedBy
-          ? String(body.performedBy)
-          : null,
+        performedBy: body.performedBy ? String(body.performedBy) : null,
       },
     });
 
@@ -75,67 +57,57 @@ export async function POST(req: Request) {
   }
 }
 
-// ================= PUT =================
+/* ================= PUT ================= */
 export async function PUT(req: Request) {
   try {
     const prisma = getPrisma();
     const body = await req.json();
+    const { id, ...data } = body;
 
-    if (!body.id) {
+    if (!id) {
       return NextResponse.json({ error: "Thiếu id" }, { status: 400 });
     }
 
     const updated = await prisma.customer.update({
-      where: { id: Number(body.id) },
+      where: { id: Number(id) },
       data: {
-        name: body.name ? String(body.name) : undefined,
-        phone: body.phone ? String(body.phone) : undefined,
-
+        name: data.name !== undefined ? String(data.name) : undefined,
+        phone: data.phone !== undefined ? String(data.phone) : undefined,
         depositDate:
-          body.depositDate !== undefined
-            ? body.depositDate
-              ? new Date(body.depositDate)
+          data.depositDate !== undefined
+            ? data.depositDate
+              ? new Date(data.depositDate)
               : null
             : undefined,
-
         contractDate:
-          body.contractDate !== undefined
-            ? body.contractDate
-              ? new Date(body.contractDate)
+          data.contractDate !== undefined
+            ? data.contractDate
+              ? new Date(data.contractDate)
               : null
             : undefined,
-
         depositAmount:
-          body.depositAmount !== undefined
-            ? body.depositAmount != null
-              ? Number(body.depositAmount)
+          data.depositAmount !== undefined
+            ? data.depositAmount != null
+              ? Number(data.depositAmount)
               : null
             : undefined,
-
         contractAmount:
-          body.contractAmount !== undefined
-            ? body.contractAmount != null
-              ? Number(body.contractAmount)
+          data.contractAmount !== undefined
+            ? data.contractAmount != null
+              ? Number(data.contractAmount)
               : null
             : undefined,
-
         commission:
-          body.commission !== undefined
-            ? body.commission != null
-              ? Number(body.commission)
+          data.commission !== undefined
+            ? data.commission != null
+              ? Number(data.commission)
               : null
             : undefined,
-
         received:
-          body.received !== undefined
-            ? Boolean(body.received)
-            : undefined,
-
+          data.received !== undefined ? Boolean(data.received) : undefined,
         performedBy:
-          body.performedBy !== undefined
-            ? body.performedBy
-              ? String(body.performedBy)
-              : null
+          data.performedBy !== undefined
+            ? String(data.performedBy)
             : undefined,
       },
     });
@@ -150,7 +122,7 @@ export async function PUT(req: Request) {
   }
 }
 
-// ================= DELETE =================
+/* ================= DELETE ================= */
 export async function DELETE(req: Request) {
   try {
     const prisma = getPrisma();
