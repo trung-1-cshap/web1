@@ -1,18 +1,21 @@
 import { NextResponse } from "next/server";
 import { getPrisma } from "@/lib/prisma";
 
-export const runtime = "nodejs"; // ép chạy Node runtime
+export const runtime = "nodejs";
 
 export async function GET() {
   try {
     const prisma = getPrisma();
-    const cats = await prisma.category.findMany({
-      orderBy: { createdAt: "desc" },
+    const categories = await prisma.category.findMany({
+      orderBy: { id: "desc" }, // 🔴 đổi từ createdAt -> id
     });
-    return NextResponse.json(cats);
+    return NextResponse.json(categories);
   } catch (err) {
     console.error("GET /api/categories error:", err);
-    return NextResponse.json({ error: "Internal error" }, { status: 500 });
+    return NextResponse.json(
+      { error: String(err) }, // 🔴 trả lỗi thật
+      { status: 500 }
+    );
   }
 }
 
@@ -41,7 +44,10 @@ export async function POST(req: Request) {
     return NextResponse.json(created, { status: 201 });
   } catch (err) {
     console.error("POST /api/categories error:", err);
-    return NextResponse.json({ error: "Internal error" }, { status: 500 });
+    return NextResponse.json(
+      { error: String(err) },
+      { status: 500 }
+    );
   }
 }
 
@@ -58,6 +64,9 @@ export async function DELETE(req: Request) {
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error("DELETE /api/categories error:", err);
-    return NextResponse.json({ error: "Internal error" }, { status: 500 });
+    return NextResponse.json(
+      { error: String(err) },
+      { status: 500 }
+    );
   }
 }
