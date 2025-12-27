@@ -1,85 +1,175 @@
-import { NextResponse } from 'next/server'
-import { promises as fs } from 'fs'
-import path from 'path'
+import { NextResponse } from "next/server";
+import { getPrisma } from "@/lib/prisma";
 
-const DATA_FILE = path.resolve(process.cwd(), 'data', 'customers.json')
+export const runtime = "nodejs";
 
-async function ensureDataFile() {
-  try {
-    await fs.mkdir(path.dirname(DATA_FILE), { recursive: true })
-    await fs.access(DATA_FILE)
-  } catch (e) {
-    // tạo file mảng rỗng
-    await fs.writeFile(DATA_FILE, JSON.stringify([]), 'utf8')
-  }
-}
-
+// ================= GET =================
 export async function GET() {
   try {
-    await ensureDataFile()
-    const txt = await fs.readFile(DATA_FILE, 'utf8')
-    const data = JSON.parse(txt || '[]')
-    return new Response(JSON.stringify(data), { headers: { 'content-type': 'application/json' } })
+    const prisma = getPrisma();
+    const customers = await prisma.customer.findMany({
+      orderBy: { createdAt: "desc" },
+    });
+    return NextResponse.json(customers);
   } catch (err) {
-    console.error('GET /api/customers error', err)
-    return new Response(JSON.stringify([]), { status: 500, headers: { 'content-type': 'application/json' } })
+    console.error("GET /api/customers error:", err);
+    return NextResponse.json([], { status: 500 });
   }
 }
 
+// ================= POST =================
 export async function POST(req: Request) {
   try {
-    const payload = await req.json()
-    await ensureDataFile()
-    const txt = await fs.readFile(DATA_FILE, 'utf8')
-    const arr = JSON.parse(txt || '[]')
-    const id = `c${Date.now()}`
-    const item = { id, ...payload }
-    arr.unshift(item)
-    await fs.writeFile(DATA_FILE, JSON.stringify(arr, null, 2), 'utf8')
-    return new Response(JSON.stringify(item), { status: 201, headers: { 'content-type': 'application/json' } })
+    const prisma = getPrisma();
+    const body = await req.json();
+
+    if (!body.name) {
+      return NextResponse.json(
+        { error: "Thiếu tên khách hàng" },
+        { status: 400 }
+      );
+    }
+
+    const created = await prisma.customer.create({
+      data: {
+        name: String(body.name),
+        phone: body.phone ? String(body.phone) : null,
+
+        depositDate: body.depositDate
+          ? new Date(body.depositDate)
+          : null,
+
+        contractDate: body.contractDate
+          ? new Date(body.contractDate)
+          : null,
+
+        depositAmount:
+          body.depositAmount != null
+            ? Number(body.depositAmount)
+            : null,
+
+        contractAmount:
+          body.contractAmount != null
+            ? Number(body.contractAmount)
+            : null,
+
+        commission:
+          body.commission != null
+            ? Number(body.commission)
+            : null,
+
+        received: Boolean(body.received),
+        performedBy: body.performedBy
+          ? String(body.performedBy)
+          : null,
+      },
+    });
+
+    return NextResponse.json(created, { status: 201 });
   } catch (err) {
-    console.error('POST /api/customers error', err)
-    return new Response(JSON.stringify({ error: 'Lỗi máy chủ nội bộ' }), { status: 500, headers: { 'content-type': 'application/json' } })
+    console.error("POST /api/customers error:", err);
+    return NextResponse.json(
+      { error: "Lỗi máy chủ nội bộ" },
+      { status: 500 }
+    );
   }
 }
 
+// ================= PUT =================
 export async function PUT(req: Request) {
   try {
-    const body = await req.json()
-    const { id, ...patch } = body
-    if (!id) return new Response(JSON.stringify({ error: 'Thiếu id' }), { status: 400, headers: { 'content-type': 'application/json' } })
-    await ensureDataFile()
-    const txt = await fs.readFile(DATA_FILE, 'utf8')
-    const arr = JSON.parse(txt || '[]')
-    let updated = null
-    const next = arr.map((c: any) => {
-      if (c.id === id) {
-        updated = { ...c, ...patch }
-        return updated
-      }
-      return c
-    })
-    await fs.writeFile(DATA_FILE, JSON.stringify(next, null, 2), 'utf8')
-    return new Response(JSON.stringify(updated), { status: 200, headers: { 'content-type': 'application/json' } })
+    const prisma = getPrisma();
+    const body = await req.json();
+
+    if (!body.id) {
+      return NextResponse.json({ error: "Thiếu id" }, { status: 400 });
+    }
+
+    const updated = await prisma.customer.update({
+      where: { id: Number(body.id) },
+      data: {
+        name: body.name ? String(body.name) : undefined,
+        phone: body.phone ? String(body.phone) : undefined,
+
+        depositDate:
+          body.depositDate !== undefined
+            ? body.depositDate
+              ? new Date(body.depositDate)
+              : null
+            : undefined,
+
+        contractDate:
+          body.contractDate !== undefined
+            ? body.contractDate
+              ? new Date(body.contractDate)
+              : null
+            : undefined,
+
+        depositAmount:
+          body.depositAmount !== undefined
+            ? body.depositAmount != null
+              ? Number(body.depositAmount)
+              : null
+            : undefined,
+
+        contractAmount:
+          body.contractAmount !== undefined
+            ? body.contractAmount != null
+              ? Number(body.contractAmount)
+              : null
+            : undefined,
+
+        commission:
+          body.commission !== undefined
+            ? body.commission != null
+              ? Number(body.commission)
+              : null
+            : undefined,
+
+        received:
+          body.received !== undefined
+            ? Boolean(body.received)
+            : undefined,
+
+        performedBy:
+          body.performedBy !== undefined
+            ? body.performedBy
+              ? String(body.performedBy)
+              : null
+            : undefined,
+      },
+    });
+
+    return NextResponse.json(updated);
   } catch (err) {
-    console.error('PUT /api/customers error', err)
-    return new Response(JSON.stringify({ error: 'Lỗi máy chủ nội bộ' }), { status: 500, headers: { 'content-type': 'application/json' } })
+    console.error("PUT /api/customers error:", err);
+    return NextResponse.json(
+      { error: "Lỗi máy chủ nội bộ" },
+      { status: 500 }
+    );
   }
 }
 
+// ================= DELETE =================
 export async function DELETE(req: Request) {
   try {
-    const body = await req.json()
-    const { id } = body
-    if (!id) return new Response(JSON.stringify({ error: 'Thiếu id' }), { status: 400, headers: { 'content-type': 'application/json' } })
-    await ensureDataFile()
-    const txt = await fs.readFile(DATA_FILE, 'utf8')
-    const arr = JSON.parse(txt || '[]')
-    const next = arr.filter((c: any) => c.id !== id)
-    await fs.writeFile(DATA_FILE, JSON.stringify(next, null, 2), 'utf8')
-    return new Response(JSON.stringify({ ok: true }), { status: 200, headers: { 'content-type': 'application/json' } })
+    const prisma = getPrisma();
+    const { id } = await req.json();
+
+    if (!id) {
+      return NextResponse.json({ error: "Thiếu id" }, { status: 400 });
+    }
+
+    await prisma.customer.delete({
+      where: { id: Number(id) },
+    });
+
+    return NextResponse.json({ ok: true });
   } catch (err) {
-    console.error('DELETE /api/customers error', err)
-    return new Response(JSON.stringify({ error: 'Lỗi máy chủ nội bộ' }), { status: 500, headers: { 'content-type': 'application/json' } })
+    console.error("DELETE /api/customers error:", err);
+    return NextResponse.json(
+      { error: "Lỗi máy chủ nội bộ" },
+      { status: 500 }
+    );
   }
 }
