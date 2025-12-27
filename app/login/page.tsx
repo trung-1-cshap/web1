@@ -11,28 +11,28 @@ export default function LoginPage() {
   const [showPwd, setShowPwd] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  const { user, loading, login } = useAuth();
+  const { user, login } = useAuth();
   const router = useRouter();
 
   // ✅ nếu đã login → đá khỏi trang login
   useEffect(() => {
-    if (!loading && user) {
-      router.replace("/"); // hoặc /admin
+    if (user) {
+      router.replace("/");
     }
-  }, [user, loading, router]);
+  }, [user, router]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     try {
       await login(email, password);
-      router.replace("/"); // đảm bảo không quay lại login
+      router.replace("/");
     } catch (e: any) {
       setErr(e?.message || "Đăng nhập thất bại");
     }
   }
 
-  // ✅ chặn render khi đang load hoặc đã login
-  if (loading || user) return null;
+  // ✅ đã login thì không render form
+  if (user) return null;
 
   return (
     <div className="max-w-md mx-auto p-6">

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../components/AuthProvider';
+import { getStoredUser } from '../../lib/auth';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -13,8 +14,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     // kiểm tra ngắn: nếu chưa đăng nhập thì chuyển hướng về /login
     if (!user) {
       try {
-        const raw = localStorage.getItem('mock_user');
-        if (!raw) {
+        // Prefer cookie-based session (used by the auth helpers).
+        const cur = getStoredUser();
+        if (!cur) {
+          // no cookie session => redirect to login
           router.push('/login');
           return;
         }
