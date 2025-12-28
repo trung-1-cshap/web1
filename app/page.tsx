@@ -1,21 +1,4 @@
-"use client";
-
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { useAuth } from "./components/AuthProvider";
-
 export default function Home() {
-  const { user, hydrated } = useAuth();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (!hydrated) return;           // ⛔ chờ hydrate xong
-    if (!user) router.replace("/login");
-  }, [user, hydrated, router]);
-
-  // ⛔ chưa hydrate hoặc chưa login thì không render gì
-  if (!hydrated || !user) return null;
-
   return (
     <div className="flex min-h-screen items-center justify-center bg-white font-sans">
       <main className="w-full max-w-3xl p-16">

@@ -1,63 +1,61 @@
-"use client"
+"use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react"
+import React, { createContext, useContext, useEffect, useState } from "react";
 import {
   getStoredUser,
   loginMock,
   registerMock,
   logoutMock,
-  listUsers,
-  updateProfile,
-  changePassword,
-  setUserRole,
-  deleteUser,
-  setPassword,
   ensureClientSeedAdmin,
   type User,
-} from "../../lib/auth"
+} from "../../lib/auth";
 
 type AuthContext = {
-  user: User | null
-  login: (email: string, password: string) => Promise<void>
-  register: (email: string, password: string, name?: string) => Promise<User>
-  logout: () => void
-}
+  user: User | null;
+  hydrated: boolean;
+  login: (email: string, password: string) => Promise<void>;
+  register: (email: string, password: string, name?: string) => Promise<User>;
+  logout: () => void;
+};
 
-const ctx = createContext<AuthContext | undefined>(undefined)
+const AuthContext = createContext<AuthContext | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
+  const [user, setUser] = useState<User | null>(null);
+  const [hydrated, setHydrated] = useState(false);
 
+  // ✅ CHỈ CHẠY 1 LẦN KHI LOAD TRANG / F5
   useEffect(() => {
-    ensureClientSeedAdmin() // chỉ tạo admin, KHÔNG login
-    const u = getStoredUser()
-    if (u) setUser(u)
-  }, [])
+    ensureClientSeedAdmin();
+    const u = getStoredUser(); // đọc localStorage
+    if (u) setUser(u);
+    setHydrated(true);
+  }, []);
 
   async function login(email: string, password: string) {
-    const u = await loginMock(email, password)
-    setUser(u)
+    const u = await loginMock(email, password);
+    setUser(u);
   }
 
   async function register(email: string, password: string, name?: string) {
-    const u = await registerMock(email, password, name)
-    return u
+    const u = await registerMock(email, password, name);
+    return u;
   }
 
   function logout() {
-    logoutMock()
-    setUser(null)
+    logoutMock();
+    setUser(null);
   }
 
   return (
-    <ctx.Provider value={{ user, login, register, logout }}>
+    <AuthContext.Provider value={{ user, hydrated, login, register, logout }}>
       {children}
-    </ctx.Provider>
-  )
+    </AuthContext.Provider>
+  );
 }
 
 export function useAuth() {
-  const v = useContext(ctx)
-  if (!v) throw new Error("useAuth must be used inside AuthProvider")
-  return v
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error("useAuth must be used inside AuthProvider");
+  return ctx;
 }

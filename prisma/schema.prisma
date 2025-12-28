@@ -94,16 +94,18 @@ model Transfer {
 }
 
 model Customer {
-  id              Int      @id @default(autoincrement())
-  name            String
-  phone           String?
-  depositDate     DateTime?
-  contractDate    DateTime?
-  depositAmount   Decimal? @db.Decimal(15, 2)
-  contractAmount  Decimal? @db.Decimal(15, 2)
-  commission      Int?
-  received        Boolean  @default(false)
-  performedBy     String?
-  createdAt       DateTime @default(now())
+  id                     Int      @id @default(autoincrement())
+  name                   String
+  phone                  String?
+  depositDate            DateTime?
+  contractDate           DateTime?
+  contractValidityMonths Int?      // ✅ THÊM DÒNG NÀY
+  depositAmount          Decimal?  @db.Decimal(15, 2)
+  contractAmount         Decimal?  @db.Decimal(15, 2)
+  commission             Int?
+  received               Boolean   @default(false)
+  performedBy            String?
+  createdAt              DateTime  @default(now())
 }
+
 

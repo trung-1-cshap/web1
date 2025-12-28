@@ -13,13 +13,13 @@ export default function AdminLayout({
   const router = useRouter();
 
   useEffect(() => {
-    if (!hydrated) return;        // ⛔ chờ client hydrate xong
+    if (!hydrated) return;          // ⛔ chờ hydrate xong
     if (!user) {
-      router.replace("/login");  // ❌ chưa login → đá về login
+      router.replace("/login");     // ❌ chưa login → đá
     }
   }, [user, hydrated, router]);
 
-  // ⛔ chưa hydrate hoặc chưa login thì không render gì
+  // ⛔ tránh render nhấp nháy
   if (!hydrated || !user) return null;
 
   return <>{children}</>;
