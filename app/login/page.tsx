@@ -11,15 +11,14 @@ export default function LoginPage() {
   const [showPwd, setShowPwd] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  const { user, login } = useAuth();
+  const { user, hydrated, login } = useAuth();
   const router = useRouter();
 
-  // ✅ nếu đã login → đá khỏi trang login
+  // ✅ CHỈ redirect SAU hydrate
   useEffect(() => {
-    if (user) {
-      router.replace("/");
-    }
-  }, [user, router]);
+    if (!hydrated) return;
+    if (user) router.replace("/");
+  }, [user, hydrated, router]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -31,8 +30,8 @@ export default function LoginPage() {
     }
   }
 
-  // ✅ đã login thì không render form
-  if (user) return null;
+  // ⛔ tránh render sai khi chưa hydrate
+  if (!hydrated || user) return null;
 
   return (
     <div className="max-w-md mx-auto p-6">
