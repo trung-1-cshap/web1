@@ -59,7 +59,7 @@ model Transaction {
   type        TransactionType
   date        DateTime        @default(now())
   description String?
-
+  received    Boolean         @default(false)
   // Approval fields
   approved    Boolean         @default(false)
   approvedAt  DateTime?

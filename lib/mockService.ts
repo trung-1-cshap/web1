@@ -78,6 +78,7 @@ export type Transaction = {
   accountId?: number | string;
   accountName?: string; // Để hiển thị
   performedBy?: string;
+  received?: boolean;
   approved?: boolean;
   approvedBy?: string | null;
   approvedAt?: string | null;
