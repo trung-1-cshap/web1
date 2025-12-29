@@ -1,141 +1,123 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  getCategories,
-  addCategory,
-  deleteCategory,
-  type Category,
+import { 
+  getCategories, 
+  addCategory, 
+  deleteCategory, 
+  type Category 
 } from "../../../lib/mockService";
 
-export default function CategoriesPage() {
+export default function AdminCategoriesPage() {
   const [items, setItems] = useState<Category[]>([]);
   const [name, setName] = useState("");
   const [type, setType] = useState<"thu" | "chi">("thu");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getCategories().then((cats) => {
-      const safeCats: Category[] = Array.isArray(cats) ? cats : [];
-      setItems(
-        safeCats.filter(
-          (c) => (c.name || "").trim() !== "Uncategorized"
-        )
-      );
-    });
+    loadData();
   }, []);
+
+  async function loadData() {
+    try {
+      const data = await getCategories();
+      setItems(data);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
-    if (!name.trim()) return;
-
-    const norm = name.trim().toLowerCase();
-    if (norm === "uncategorized") {
-      alert('Tên "Uncategorized" không được phép');
-      return;
-    }
-
-    if (
-      items.some(
-        (i) => (i.name || "").trim().toLowerCase() === norm
-      )
-    ) {
-      alert("Danh mục này đã tồn tại");
-      return;
-    }
-
-    const created = await addCategory({ name, type });
-
-    if ((created?.name || "").trim() === "Uncategorized") {
-      setName("");
-      return;
-    }
-
-    setItems((s) => [created, ...s]);
+    if (!name) return;
+    
+    await addCategory({ name, type });
     setName("");
+    // Reload lại dữ liệu sau khi thêm
+    await loadData();
   }
 
-  async function handleDelete(id: string) {
-    try {
-      await deleteCategory(id);
-      setItems((s) =>
-        Array.isArray(s)
-          ? s.filter((x) => String(x.id) !== String(id))
-          : []
-      );
-    } catch (err) {
-      console.error("Failed to delete category", err);
-      alert(
-        "Xóa danh mục thất bại: " +
-          (err instanceof Error ? err.message : String(err))
-      );
-    }
+  // ✅ SỬA LỖI Ở ĐÂY: Cho phép id là string HOẶC number
+  async function handleDelete(id: string | number) {
+    if (!confirm("Bạn có chắc muốn xóa danh mục này?")) return;
+    
+    await deleteCategory(id);
+    // Reload lại dữ liệu sau khi xóa
+    await loadData();
   }
+
+  if (loading) return <div>Đang tải danh mục...</div>;
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <h2 className="text-2xl font-semibold mb-4">
-        Quản lý Danh mục
-      </h2>
+    <div className="p-6">
+      <h1 className="text-2xl font-bold mb-6">Quản lý Danh mục</h1>
 
-      <form
-        onSubmit={handleAdd}
-        className="flex flex-wrap gap-2 mb-4 items-center"
-      >
-        <input
-          className="border rounded px-3 py-2 flex-1 min-w-[160px]"
-          placeholder="Tên danh mục"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
+      {/* Form thêm danh mục */}
+      <form onSubmit={handleAdd} className="flex gap-2 mb-8 bg-white p-4 rounded shadow">
+        <input 
+          className="border rounded px-3 py-2 flex-1" 
+          placeholder="Tên danh mục (Ví dụ: Tiền nhà, Lương...)" 
+          value={name} 
+          onChange={(e) => setName(e.target.value)} 
         />
-        <select
-          className="border rounded px-3 py-2 w-full sm:w-auto"
-          value={type}
-          onChange={(e) =>
-            setType(e.target.value as "thu" | "chi")
-          }
+        <select 
+          className="border rounded px-3 py-2" 
+          value={type} 
+          onChange={(e) => setType(e.target.value as "thu" | "chi")}
         >
-          <option value="thu">Thu</option>
-          <option value="chi">Chi</option>
+          <option value="thu">Khoản Thu (Income)</option>
+          <option value="chi">Khoản Chi (Expense)</option>
         </select>
-        <button className="bg-slate-800 text-white px-4 py-2 rounded w-full sm:w-auto">
+        <button className="bg-slate-800 text-white px-4 py-2 rounded hover:bg-slate-700">
           Thêm
         </button>
       </form>
 
-      <div className="bg-white border rounded">
-        <table className="w-full">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="text-left p-3">Tên</th>
-              <th className="text-left p-3">Loại</th>
-              <th className="p-3">Hành động</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((it) => (
-              <tr key={it.id} className="border-t">
-                <td className="p-3">{it.name}</td>
-                <td className="p-3">
-                  {String(it.type) === "INCOME" ||
-                  String(it.type) === "thu"
-                    ? "Thu"
-                    : String(it.type) === "EXPENSE" ||
-                      String(it.type) === "chi"
-                    ? "Chi"
-                    : String(it.type)}
-                </td>
-                <td className="p-3 text-center">
-                  <button
-                    className="text-red-600"
-                    onClick={() => handleDelete(it.id)}
-                  >
-                    Xóa
-                  </button>
-                </td>
-              </tr>
+      {/* Danh sách danh mục */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Cột Thu */}
+        <div>
+          <h3 className="font-semibold text-lg text-green-600 mb-3 border-b pb-2">Khoản Thu</h3>
+          <div className="space-y-2">
+            {items.filter(i => i.type === 'thu' || i.type === 'INCOME').map((it) => (
+              <div key={it.id} className="flex justify-between items-center bg-white p-3 rounded border shadow-sm">
+                <span>{it.name}</span>
+                <button 
+                  className="text-red-500 hover:text-red-700 text-sm px-2 py-1 rounded hover:bg-red-50"
+                  onClick={() => handleDelete(it.id)}
+                >
+                  Xóa
+                </button>
+              </div>
             ))}
-          </tbody>
-        </table>
+            {items.filter(i => i.type === 'thu' || i.type === 'INCOME').length === 0 && (
+              <p className="text-gray-400 text-sm italic">Chưa có danh mục thu nào</p>
+            )}
+          </div>
+        </div>
+
+        {/* Cột Chi */}
+        <div>
+          <h3 className="font-semibold text-lg text-red-600 mb-3 border-b pb-2">Khoản Chi</h3>
+          <div className="space-y-2">
+            {items.filter(i => i.type === 'chi' || i.type === 'EXPENSE').map((it) => (
+              <div key={it.id} className="flex justify-between items-center bg-white p-3 rounded border shadow-sm">
+                <span>{it.name}</span>
+                <button 
+                  className="text-red-500 hover:text-red-700 text-sm px-2 py-1 rounded hover:bg-red-50"
+                  onClick={() => handleDelete(it.id)}
+                >
+                  Xóa
+                </button>
+              </div>
+            ))}
+             {items.filter(i => i.type === 'chi' || i.type === 'EXPENSE').length === 0 && (
+              <p className="text-gray-400 text-sm italic">Chưa có danh mục chi nào</p>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
