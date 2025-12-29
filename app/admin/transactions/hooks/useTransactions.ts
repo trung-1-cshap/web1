@@ -1,133 +1,167 @@
-"use client"
+import { useState, useEffect } from "react";
+import {
+  getTransactions,
+  getCategories,
+  getAccounts,
+  addTransaction,
+  updateTransaction,
+  deleteTransaction,
+  Transaction,
+  Category,
+  Account,
+} from "../../../../lib/mockService";
 
-import { useEffect, useState } from "react";
-import { getTransactions, addTransaction, updateTransaction, getCategories, type Transaction, type Category } from "../../../../lib/mockService";
-import useCustomers from "./useCustomers";
-import useTrash from "./useTrash";
-
-export default function useTransactions(user?: any) {
-  const [items, setItems] = useState<Transaction[]>([]);
+export function useTransactions(user: any) {
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [amount, setAmount] = useState(0);
-  const [type, setType] = useState<"thu" | "chi">("thu");
-  const [categoryId, setCategoryId] = useState<string | undefined>(undefined);
-  const [actorName, setActorName] = useState("");
+  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const [editingTransactionId, setEditingTransactionId] = useState<string | null>(null);
+  // Form states - QUAN TRỌNG: Cho phép string hoặc number
+  const [amount, setAmount] = useState<number | "">("");
+  const [description, setDescription] = useState("");
+  const [categoryId, setCategoryId] = useState<string | number>(""); 
+  const [accountId, setAccountId] = useState<string | number>("");
+  const [type, setType] = useState<"thu" | "chi">("thu");
+  const [date, setDate] = useState(new Date().toISOString().slice(0, 16));
+
+  // Edit states
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [editTransactionData, setEditTransactionData] = useState<Partial<Transaction>>({});
 
-  const [flashMsg, setFlashMsg] = useState<string | null>(null);
-
   useEffect(() => {
-    getTransactions().then((res) => {
-      if (Array.isArray(res)) {
-        setItems(res);
-      } else {
-        console.warn('useTransactions: getTransactions returned non-array', res);
-        setItems([]);
-      }
-    }).catch(() => {});
-    getCategories().then((c) => {
-      setCategories(c);
-      if (c.length) setCategoryId(c[0].id);
-    }).catch(() => {});
+    loadData();
   }, []);
+
+  async function loadData() {
+    setLoading(true);
+    try {
+      const [txs, cats, accs] = await Promise.all([
+        getTransactions(),
+        getCategories(),
+        getAccounts(),
+      ]);
+      setTransactions(txs);
+      setCategories(cats);
+      setAccounts(accs);
+
+      // Set default selections
+      if (cats.length > 0) setCategoryId(cats[0].id);
+      if (accs.length > 0) setAccountId(accs[0].id);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
-    if (!amount) return;
-    const created = await addTransaction({
-      date: new Date().toISOString(),
-      amount,
-      type,
-      categoryId,
-      description: "-",
-      accountId: undefined,
-      performedBy: user?.name ?? "-",
-      actorName: actorName || "-",
-    });
-    setItems((s) => [created, ...s]);
-    setAmount(0);
-    setActorName("");
+    if (!amount || !categoryId || !accountId) return;
+
+    const catName = categories.find((c) => String(c.id) === String(categoryId))?.name;
+    const accName = accounts.find((a) => String(a.id) === String(accountId))?.name;
+
+    try {
+      const newTx = await addTransaction({
+        date: new Date(date).toISOString(),
+        amount: Number(amount),
+        type,
+        categoryId,
+        categoryName: catName,
+        accountId,
+        accountName: accName,
+        description,
+        performedBy: user?.name || user?.email,
+        approved: false, // Mặc định chưa duyệt
+        received: false, // Mặc định chưa thu
+      });
+
+      setTransactions([newTx, ...transactions]);
+      
+      // Reset form
+      setAmount("");
+      setDescription("");
+      setDate(new Date().toISOString().slice(0, 16));
+    } catch (error) {
+      console.error("Add failed", error);
+      alert("Lỗi khi thêm giao dịch");
+    }
   }
 
+  async function handleDelete(id: string) {
+    if (!confirm("Xóa giao dịch này?")) return;
+    try {
+      const ok = await deleteTransaction(id);
+      if (ok) {
+        setTransactions(transactions.filter((t) => String(t.id) !== String(id)));
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  // Edit logic
   function startEditTransaction(t: Transaction) {
-    setEditingTransactionId(String(t.id));
-    setEditTransactionData({ amount: t.amount, type: t.type, categoryId: t.categoryId, actorName: t.actorName, description: t.description, received: t.received });
+    setEditingTransaction(t);
+    setEditTransactionData(t);
   }
 
   function cancelEditTransaction() {
-    setEditingTransactionId(null);
+    setEditingTransaction(null);
     setEditTransactionData({});
   }
 
   async function saveEditTransaction() {
-    if (!editingTransactionId) return;
-    const payload: Partial<Transaction> = { ...editTransactionData };
-    if (payload.amount === undefined || payload.amount === null) delete payload.amount;
-    if (payload.actorName === '') delete payload.actorName;
-    if (payload.categoryId === '') delete payload.categoryId;
+    if (!editingTransaction) return;
     try {
-      const updated = await updateTransaction(editingTransactionId, payload);
+      const updated = await updateTransaction(String(editingTransaction.id), editTransactionData);
       if (updated) {
-        setItems((s) => s.map((it) => String(it.id) === String(updated.id) ? updated : it));
+        setTransactions(
+          transactions.map((t) => (String(t.id) === String(updated.id) ? updated : t))
+        );
+        cancelEditTransaction();
       }
-    } catch (err) {
-      console.error('saveEditTransaction failed', err);
-      alert('Cập nhật giao dịch thất bại: ' + (err instanceof Error ? err.message : String(err)));
+    } catch (error) {
+      console.error(error);
+      alert("Lỗi khi cập nhật");
     }
-    setEditingTransactionId(null);
-    setEditTransactionData({});
   }
 
   async function toggleTransactionReceived(id: string, val: boolean) {
-    const updated = await updateTransaction(id, { received: val });
-    if (updated) setItems((s) => s.map((t) => String(t.id) === String(updated.id) ? updated : t));
-  }
-
-  async function handleApprove(id: string) {
-    const approver = user?.name ?? user?.email ?? 'system';
     try {
-      const updated = await updateTransaction(id, { approved: true, approvedBy: approver, approvedAt: new Date().toISOString() });
-      if (updated) setItems((s) => s.map((t) => String(t.id) === String(updated.id) ? updated : t));
-    } catch (err) {
-      console.error('approve transaction failed', err);
-      alert('Duyệt giao dịch thất bại');
+      const updated = await updateTransaction(id, { received: val });
+      if (updated) {
+        setTransactions(
+          transactions.map((t) => (String(t.id) === String(updated.id) ? updated : t))
+        );
+      }
+    } catch (error) {
+      console.error(error);
     }
   }
- 
-  // kết hợp các hook customers và trash
-  const customersApi = useCustomers(user, setFlashMsg);
-  const trashApi = useTrash(items, setItems, user, setFlashMsg);
 
   return {
-    items,
-    setItems,
+    transactions,
     categories,
-    setCategories,
-    amount,
-    setAmount,
-    type,
-    setType,
-    categoryId,
-    setCategoryId,
-    actorName,
-    setActorName,
-    editingTransactionId,
-    setEditingTransactionId,
+    accounts,
+    loading,
+    // Form props
+    amount, setAmount,
+    description, setDescription,
+    categoryId, setCategoryId,
+    accountId, setAccountId,
+    type, setType,
+    date, setDate,
+    handleAdd,
+    handleDelete,
+    // Edit props
+    editingTransaction,
     editTransactionData,
     setEditTransactionData,
-    flashMsg,
-    setFlashMsg,
-    handleAdd,
     startEditTransaction,
     cancelEditTransaction,
     saveEditTransaction,
-    toggleTransactionReceived,
-    handleApprove,
-    // customers api
-    ...customersApi,
-    // trash api
-    ...trashApi,
-  } as const;
+    toggleTransactionReceived
+  };
 }
