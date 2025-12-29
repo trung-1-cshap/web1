@@ -83,7 +83,7 @@ export type Transaction = {
   approvedBy?: string | null;
   approvedAt?: string | null;
   user?: { name: string; email: string };
-  createdAt?: string; // ✅ Đã thêm createdAt
+  createdAt?: string; 
 };
 
 export function getTransactions(): Promise<Transaction[]> {
@@ -207,9 +207,14 @@ export type Customer = {
   commission?: number;
   received?: boolean;
   approved?: boolean;
+  
+  // ✅ ĐÃ BỔ SUNG 2 DÒNG NÀY ĐỂ FIX LỖI:
+  approvedBy?: string | null;
+  approvedAt?: string | null;
+
   note?: string;
   performedBy?: string;
-  createdAt?: string; // 👈 ĐÃ THÊM DÒNG NÀY ĐỂ FIX LỖI
+  createdAt?: string;
 };
 
 export function getCustomers(): Promise<Customer[]> {
