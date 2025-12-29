@@ -12,7 +12,7 @@ export async function GET() {
       include: {
         category: { select: { id: true, name: true } },
         account: { select: { id: true, name: true } },
-        user: { select: { id: true, name: true } },
+        user: { select: { id: true, name: true, email: true } }, // Lấy thêm email để dễ debug
       },
     });
     return NextResponse.json(txs);
@@ -37,23 +37,19 @@ export async function POST(req: Request) {
       description,
       categoryId,
       accountId,
-      userId,
       date,
+      email, // 👈 QUAN TRỌNG: Nhận email từ frontend
     } = body;
 
-    // ✅ validate bắt buộc
-    if (
-      rawAmount == null ||
-      !categoryId ||
-      !accountId ||
-      !userId
-    ) {
+    // 1. Validate dữ liệu bắt buộc
+    if (rawAmount == null || !categoryId || !accountId || !email) {
       return NextResponse.json(
-        { error: "Thiếu dữ liệu bắt buộc" },
+        { error: "Thiếu dữ liệu (Tiền, Danh mục, Tài khoản hoặc Email)" },
         { status: 400 }
       );
     }
 
+    // 2. Validate số tiền
     const amount = Number(rawAmount);
     if (Number.isNaN(amount)) {
       return NextResponse.json(
@@ -62,11 +58,25 @@ export async function POST(req: Request) {
       );
     }
 
+    // 3. Chuẩn hóa loại giao dịch
     const type =
       rawType === "thu" || rawType === "INCOME"
         ? "INCOME"
         : "EXPENSE";
 
+    // 4. Tìm User ID dựa trên Email
+    const user = await prisma.user.findUnique({
+      where: { email: email },
+    });
+
+    if (!user) {
+      return NextResponse.json(
+        { error: "Người dùng không tồn tại. Vui lòng đăng nhập lại." },
+        { status: 404 }
+      );
+    }
+
+    // 5. Tạo giao dịch
     const created = await prisma.transaction.create({
       data: {
         amount,
@@ -75,9 +85,9 @@ export async function POST(req: Request) {
         date: date ? new Date(date) : new Date(),
         categoryId: Number(categoryId),
         accountId: Number(accountId),
-        userId: String(userId),
+        userId: user.id, // ✅ Dùng ID thật lấy từ Database
 
-        // approval mặc định
+        // Mặc định chưa duyệt
         approved: false,
         approvedAt: null,
         approvedBy: null,
@@ -88,7 +98,7 @@ export async function POST(req: Request) {
   } catch (err) {
     console.error("POST /api/transactions error:", err);
     return NextResponse.json(
-      { error: "Lỗi máy chủ nội bộ" },
+      { error: "Lỗi máy chủ nội bộ: " + String(err) },
       { status: 500 }
     );
   }
@@ -102,10 +112,7 @@ export async function PUT(req: Request) {
     const { id, ...data } = body;
 
     if (!id) {
-      return NextResponse.json(
-        { error: "Thiếu id" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Thiếu id" }, { status: 400 });
     }
 
     const updateData: any = {};
@@ -145,11 +152,10 @@ export async function PUT(req: Request) {
       updateData.accountId = Number(data.accountId);
     }
 
-    if (data.userId !== undefined) {
-      updateData.userId = String(data.userId);
-    }
+    // ❌ Không cho phép update userId trực tiếp qua API này để tránh lỗi
+    // Nếu muốn đổi người tạo, logic sẽ phức tạp hơn.
 
-    // ✅ xử lý duyệt / đã thu
+    // ✅ Xử lý duyệt
     if (data.approved !== undefined) {
       updateData.approved = Boolean(data.approved);
       updateData.approvedAt = data.approved ? new Date() : null;
@@ -180,10 +186,7 @@ export async function DELETE(req: Request) {
     const { id } = await req.json();
 
     if (!id) {
-      return NextResponse.json(
-        { error: "Thiếu id" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Thiếu id" }, { status: 400 });
     }
 
     await prisma.transaction.delete({

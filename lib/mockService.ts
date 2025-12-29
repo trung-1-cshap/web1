@@ -1,280 +1,276 @@
-type Category = {
-  id: string;
+// lib/mockService.ts
+
+/* ================= HELPER ================= */
+function getCurrentUserEmail() {
+  if (typeof window === 'undefined') return null;
+  try {
+    const userJson = localStorage.getItem("auth_user");
+    return userJson ? JSON.parse(userJson).email : null;
+  } catch {
+    return null;
+  }
+}
+
+/* ================= CATEGORIES ================= */
+export type Category = {
+  id: number | string; // Prisma dùng Int, nhưng frontend có thể dùng string lúc đầu
   name: string;
-  type: "thu" | "chi";
-  contractValidity?: string; // thời gian hiệu lực của hợp đồng (chuỗi tự do)
-  contractStartDate?: string; // ISO date
-  contractEndDate?: string; // ISO date
+  type: "thu" | "chi" | "INCOME" | "EXPENSE";
+  contractValidity?: string;
+  contractStartDate?: string;
+  contractEndDate?: string;
   description?: string;
 };
 
-let categories: Category[] = [];
-
 export function getCategories(): Promise<Category[]> {
-  // lấy từ API nếu có
   if (typeof window !== 'undefined') {
-    return fetch('/api/categories').then((r) => r.json())
+    return fetch('/api/categories').then((r) => {
+      if (!r.ok) return []; // Trả về rỗng nếu chưa có API
+      return r.json();
+    });
   }
-  return Promise.resolve([...categories]);
+  return Promise.resolve([]);
 }
 
 export function addCategory(payload: Omit<Category, "id">): Promise<Category> {
   if (typeof window !== 'undefined') {
-    return fetch('/api/categories', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload) }).then((r) => r.json())
+    return fetch('/api/categories', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(payload)
+    }).then((r) => r.json());
   }
-  const newCat: Category = { id: `c${Date.now()}`, ...payload };
-  categories = [newCat, ...categories];
-  return Promise.resolve(newCat);
+  return Promise.resolve({} as Category);
 }
 
-export function updateCategory(id: string, payload: Partial<Category>): Promise<Category | null> {
-  // cập nhật phía client qua API chưa được triển khai trên server; dùng bộ nhớ trong thay thế
+export function updateCategory(id: string | number, payload: Partial<Category>): Promise<Category | null> {
   if (typeof window !== 'undefined') {
-    // chưa có endpoint PUT cho categories; giả lập cập nhật lạc quan bằng cách trả về payload
-    return fetch('/api/categories', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id, ...payload }) }).then((r) => r.json())
+    return fetch('/api/categories', {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ id, ...payload })
+    }).then((r) => r.json());
   }
-  let updated: Category | null = null;
-  categories = categories.map((c) => {
-    if (c.id === id) {
-      updated = { ...c, ...payload };
-      return updated;
-    }
-    return c;
-  });
-  return Promise.resolve(updated);
+  return Promise.resolve(null);
 }
 
-export function deleteCategory(id: string): Promise<boolean> {
+export function deleteCategory(id: string | number): Promise<boolean> {
   if (typeof window !== 'undefined') {
-    return fetch('/api/categories', { method: 'DELETE', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id }) }).then((r) => r.json()).then((r) => Boolean(r.ok))
+    return fetch('/api/categories', {
+      method: 'DELETE',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ id })
+    }).then((r) => r.json()).then((r) => Boolean(r.ok));
   }
-  const before = categories.length;
-  categories = categories.filter((c) => c.id !== id);
-  return Promise.resolve(categories.length < before);
+  return Promise.resolve(false);
 }
 
-export type { Category };
 
-// Giao dịch và Tài khoản (trong bộ nhớ)
-type Transaction = {
-  id: string;
-  date: string; // ISO
+/* ================= TRANSACTIONS ================= */
+export type Transaction = {
+  id: number | string;
+  date: string;
   amount: number;
-  type: "thu" | "chi";
-  categoryId?: string;
+  type: "thu" | "chi" | "INCOME" | "EXPENSE";
+  categoryId?: number | string;
+  categoryName?: string; // Để hiển thị
   description?: string;
-  accountId?: string;
-  performedBy?: string; // người dùng đã nhập giao dịch
-  actorName?: string; // người nhận/thanh toán (được nhập bởi người dùng)
-  received?: boolean; // đã thu
-  approved?: boolean; // đã duyệt
+  accountId?: number | string;
+  accountName?: string; // Để hiển thị
+  performedBy?: string;
+  approved?: boolean;
   approvedBy?: string | null;
   approvedAt?: string | null;
+  // Các trường quan hệ khác nếu cần
+  user?: { name: string; email: string };
 };
-
-let transactions: Transaction[] = [];
 
 export function getTransactions(): Promise<Transaction[]> {
   if (typeof window !== 'undefined') {
-    return fetch('/api/transactions').then(async (r) => {
-      const text = await r.text().catch(() => '')
-      let json: any = {}
-      try {
-        json = text ? JSON.parse(text) : {}
-      } catch (e) {
-        json = { _raw: text }
-      }
-      if (!r.ok) {
-        console.error('getTransactions failed', { status: r.status, statusText: r.statusText, body: json })
-        throw new Error(json?.error || JSON.stringify(json) || `HTTP ${r.status} ${r.statusText}`)
-      }
-      return json
-    })
+    return fetch('/api/transactions')
+      .then(async (r) => {
+        if (!r.ok) {
+          const err = await r.json().catch(() => ({}));
+          console.error('Get transactions failed', err);
+          return [];
+        }
+        return r.json();
+      })
+      .catch(err => {
+        console.error(err);
+        return [];
+      });
   }
-  return Promise.resolve([...transactions]);
+  return Promise.resolve([]);
 }
 
 export function addTransaction(payload: Omit<Transaction, "id">): Promise<Transaction> {
   if (typeof window !== 'undefined') {
-    return fetch('/api/transactions', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload) })
-      .then(async (r) => {
-        const json = await r.json().catch(() => ({}));
-        if (!r.ok) {
-          console.error('addTransaction failed', json);
-          throw new Error(json?.error || JSON.stringify(json) || `HTTP ${r.status}`);
-        }
-        return json;
-      })
+    // 👇 QUAN TRỌNG: Lấy email từ localStorage gửi lên Server
+    const email = getCurrentUserEmail();
+    
+    const bodyToSend = {
+      ...payload,
+      email: email // Gửi email để API tìm User ID
+    };
+
+    return fetch('/api/transactions', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(bodyToSend)
+    })
+    .then(async (r) => {
+      const json = await r.json();
+      if (!r.ok) {
+        throw new Error(json.error || `Lỗi: ${r.status}`);
+      }
+      return json;
+    });
   }
-  const t: Transaction = { id: `t${Date.now()}`, approved: false, approvedBy: null, approvedAt: null, ...payload };
-  transactions = [t, ...transactions];
-  return Promise.resolve(t);
+  return Promise.resolve({} as Transaction);
 }
 
-export function updateTransaction(id: string, payload: Partial<Transaction>): Promise<Transaction | null> {
+export function updateTransaction(id: string | number, payload: Partial<Transaction>): Promise<Transaction | null> {
   if (typeof window !== 'undefined') {
-    // sanitize payload: server may not accept approval fields or other private props
-    const safePayload: any = { ...(payload || {}) };
-    delete safePayload.approved;
-    delete safePayload.approvedBy;
-    delete safePayload.approvedAt;
-    return fetch('/api/transactions', { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id, ...safePayload }) })
-      .then(async (r) => {
-        const text = await r.text().catch(() => '')
-        let json: any = {}
-        try { json = text ? JSON.parse(text) : {} } catch { json = { _raw: text } }
-        if (!r.ok) {
-          console.error('updateTransaction failed', { status: r.status, statusText: r.statusText, body: json })
-          const msg = json?.error || JSON.stringify(json) || `HTTP ${r.status} ${r.statusText}`
-          throw new Error(msg)
-        }
-        return json
-      })
+    // Filter các trường nhạy cảm nếu cần, nhưng API sẽ lo việc validate
+    return fetch('/api/transactions', {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ id, ...payload })
+    })
+    .then(async (r) => {
+      const json = await r.json();
+      if (!r.ok) throw new Error(json.error || "Update failed");
+      return json;
+    });
   }
-  let updated: Transaction | null = null;
-  transactions = transactions.map((t) => {
-    if (t.id === id) {
-      updated = { ...t, ...payload };
-      return updated;
-    }
-    return t;
-  });
-  return Promise.resolve(updated);
+  return Promise.resolve(null);
 }
 
-export function deleteTransaction(id: string): Promise<boolean> {
+export function deleteTransaction(id: string | number): Promise<boolean> {
   if (typeof window !== 'undefined') {
-    return fetch('/api/transactions', { method: 'DELETE', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id }) })
-      .then(async (r) => {
-        const text = await r.text().catch(() => '')
-        let parsed: any = undefined
-        try {
-          parsed = text ? JSON.parse(text) : undefined
-        } catch {
-          parsed = undefined
-        }
-        const bodyForLog = parsed ?? (text ? { _raw: text } : undefined)
-        if (!r.ok) {
-          console.error('deleteTransaction failed', { status: r.status, statusText: r.statusText, body: bodyForLog })
-          // Nếu server báo không tìm thấy, coi như đã bị xóa (delete idempotent)
-          if (r.status === 404) return false
-          const errMsg = parsed?.error ?? (parsed ? JSON.stringify(parsed) : (text || `HTTP ${r.status} ${r.statusText}`))
-          throw new Error(errMsg)
-        }
-        // Trường hợp server trả r.ok nhưng không có body — coi là thành công
-        if (parsed === undefined) return true
-        return Boolean(parsed.ok ?? true)
-      })
+    return fetch('/api/transactions', {
+      method: 'DELETE',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ id })
+    })
+    .then((r) => r.ok);
   }
-  const before = transactions.length;
-  transactions = transactions.filter((t) => t.id !== id);
-  return Promise.resolve(transactions.length < before);
+  return Promise.resolve(false);
 }
 
-type Account = {
-  id: string;
+
+/* ================= ACCOUNTS ================= */
+export type Account = {
+  id: number | string;
   name: string;
-  balance: number;
+  balance: number; // Có thể là currentBalance mapping từ DB
+  initialBalance?: number;
 };
 
-let accounts: Account[] = [];
-
 export function getAccounts(): Promise<Account[]> {
-  return Promise.resolve([...accounts]);
+  if (typeof window !== 'undefined') {
+    // 👇 Gọi API lấy danh sách tài khoản
+    return fetch('/api/accounts').then(async (r) => {
+      if (!r.ok) return []; 
+      const data = await r.json();
+      // Map dữ liệu từ DB (currentBalance) sang frontend (balance) nếu cần
+      return data.map((a: any) => ({
+        ...a,
+        balance: Number(a.currentBalance || a.balance || 0)
+      }));
+    });
+  }
+  return Promise.resolve([]);
 }
 
 export function addAccount(payload: Omit<Account, "id">): Promise<Account> {
-  const a: Account = { id: `a${Date.now()}`, ...payload };
-  accounts = [a, ...accounts];
-  return Promise.resolve(a);
+  if (typeof window !== 'undefined') {
+    return fetch('/api/accounts', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(payload)
+    }).then(r => r.json());
+  }
+  return Promise.resolve({} as Account);
 }
 
-export function updateAccount(id: string, payload: Partial<Account>): Promise<Account | null> {
-  let updated: Account | null = null;
-  accounts = accounts.map((a) => {
-    if (a.id === id) {
-      updated = { ...a, ...payload };
-      return updated;
-    }
-    return a;
-  });
-  return Promise.resolve(updated);
+export function updateAccount(id: string | number, payload: Partial<Account>): Promise<Account | null> {
+   if (typeof window !== 'undefined') {
+    return fetch('/api/accounts', {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ id, ...payload })
+    }).then(r => r.json());
+  }
+  return Promise.resolve(null);
 }
 
-export function transferBetweenAccounts(fromId: string, toId: string, amount: number): Promise<boolean> {
-  const from = accounts.find((a) => a.id === fromId);
-  const to = accounts.find((a) => a.id === toId);
-  if (!from || !to || from.balance < amount) return Promise.resolve(false);
-  from.balance -= amount;
-  to.balance += amount;
-  return Promise.resolve(true);
+// Hàm này tạm thời chưa có API endpoint riêng, bạn có thể tạo sau
+export function transferBetweenAccounts(fromId: string | number, toId: string | number, amount: number): Promise<boolean> {
+  // Logic chuyển tiền phức tạp nên được xử lý ở Backend Transaction
+  console.warn("Tính năng chuyển khoản cần API Backend");
+  return Promise.resolve(false); 
 }
 
-export type { Transaction, Account };
 
-// Customers (in-memory)
-type Customer = {
-  id: string;
+/* ================= CUSTOMERS ================= */
+export type Customer = {
+  id: number | string;
   name: string;
   phone?: string;
   email?: string;
-  depositDate?: string; // ngày cọc (ISO)
-  contractDate?: string; // ngày ký hợp đồng (ISO)
-  contractStartDate?: string; // ngày bắt đầu hiệu lực (ISO)
-  contractEndDate?: string; // ngày kết thúc hiệu lực (ISO)
-  contractValidityMonths?: number; // số tháng hiệu lực của hợp đồng
-  depositAmount?: number; // tiền cọc
-  contractAmount?: number; // tiền hợp đồng
-  commission?: number; // hoa hồng
-  received?: boolean; // đã thu
+  depositDate?: string;
+  contractDate?: string;
+  contractValidityMonths?: number;
+  depositAmount?: number;
+  contractAmount?: number;
+  commission?: number;
+  received?: boolean;
   approved?: boolean;
-  approvedBy?: string | null;
-  approvedAt?: string | null;
   note?: string;
-  createdAt?: string;
   performedBy?: string;
 };
 
-let customers: Customer[] = [];
-
 export function getCustomers(): Promise<Customer[]> {
   if (typeof window !== 'undefined') {
-    return fetch('/api/customers').then((r) => r.json())
+    return fetch('/api/customers').then((r) => {
+        if (!r.ok) return [];
+        return r.json();
+    });
   }
-  return Promise.resolve([...customers]);
+  return Promise.resolve([]);
 }
 
 export function addCustomer(payload: Omit<Customer, "id">): Promise<Customer> {
   if (typeof window !== 'undefined') {
-    return fetch('/api/customers', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload) }).then((r) => r.json())
+    return fetch('/api/customers', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(payload)
+    }).then((r) => r.json());
   }
-  const c: Customer = { id: `u${Date.now()}`, approved: false, approvedBy: null, approvedAt: null, ...payload };
-  customers = [c, ...customers];
-  return Promise.resolve(c);
+  return Promise.resolve({} as Customer);
 }
 
-export function updateCustomer(id: string, payload: Partial<Customer>): Promise<Customer | null> {
+export function updateCustomer(id: string | number, payload: Partial<Customer>): Promise<Customer | null> {
   if (typeof window !== 'undefined') {
-    return fetch('/api/customers', { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id, ...payload }) }).then((r) => r.json())
+    return fetch('/api/customers', {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ id, ...payload })
+    }).then((r) => r.json());
   }
-  let updated: Customer | null = null;
-  customers = customers.map((c) => {
-    if (c.id === id) {
-      updated = { ...c, ...payload };
-      return updated;
-    }
-    return c;
-  });
-  return Promise.resolve(updated);
+  return Promise.resolve(null);
 }
 
-export function deleteCustomer(id: string): Promise<boolean> {
+export function deleteCustomer(id: string | number): Promise<boolean> {
   if (typeof window !== 'undefined') {
-    return fetch('/api/customers', { method: 'DELETE', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id }) }).then((r) => r.json()).then((r) => Boolean(r.ok))
+    return fetch('/api/customers', {
+      method: 'DELETE',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ id })
+    }).then((r) => Boolean(r.ok));
   }
-  const before = customers.length;
-  customers = customers.filter((c) => c.id !== id);
-  return Promise.resolve(customers.length < before);
+  return Promise.resolve(false);
 }
-
-export type { Customer };

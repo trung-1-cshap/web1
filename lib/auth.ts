@@ -1,161 +1,125 @@
+// lib/auth.ts
+
 export type User = {
+  id?: string // Thêm id vì DB thật có id
   email: string
-  password: string
+  password?: string // Có thể undefined khi trả về từ API (để bảo mật)
   name?: string
   role: string
 }
 
-const USERS_KEY = "users"
 const AUTH_KEY = "auth_user"
 
-/* ================= Utils ================= */
+/* ================= Auth Session (Client Side) ================= */
 
-function getUsers(): User[] {
-  if (typeof window === "undefined") return []
-  return JSON.parse(localStorage.getItem(USERS_KEY) || "[]")
-}
-
-function saveUsers(users: User[]) {
-  localStorage.setItem(USERS_KEY, JSON.stringify(users))
-}
-
-/* ================= Auth ================= */
-
+// Hàm này giữ nguyên để UI biết ai đang đăng nhập
 export function getStoredUser(): User | null {
   if (typeof window === "undefined") return null
-  return JSON.parse(localStorage.getItem(AUTH_KEY) || "null")
+  try {
+    return JSON.parse(localStorage.getItem(AUTH_KEY) || "null")
+  } catch {
+    return null
+  }
 }
 
+// Hàm Login: Gọi API /api/login
 export async function loginMock(email: string, password: string): Promise<User> {
-  const users = getUsers()
-  // So sánh email không phân biệt hoa thường
-  const user = users.find(
-    (u) => u.email.toLowerCase() === email.toLowerCase() && u.password === password
-  )
-  if (!user) throw new Error("Sai email hoặc mật khẩu")
+  const res = await fetch("/api/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+  })
 
+  if (!res.ok) {
+    const error = await res.json()
+    throw new Error(error.error || "Đăng nhập thất bại")
+  }
+
+  const user = await res.json()
+  
+  // Lưu session vào localStorage để giữ đăng nhập ở Client
   localStorage.setItem(AUTH_KEY, JSON.stringify(user))
   return user
 }
 
+// Hàm Register: Gọi API /api/register (Bạn cần tạo route này sau)
 export async function registerMock(
   email: string,
   password: string,
   name?: string
 ): Promise<User> {
-  const users = getUsers()
-  if (users.some((u) => u.email.toLowerCase() === email.toLowerCase())) {
-    throw new Error("Email đã tồn tại")
+  const res = await fetch("/api/register", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password, name }),
+  })
+
+  if (!res.ok) {
+    const error = await res.json()
+    throw new Error(error.error || "Đăng ký thất bại")
   }
 
-  const newUser: User = {
-    email,
-    password,
-    name,
-    role: "user", // Mặc định là user thường
-  }
-
-  users.push(newUser)
-  saveUsers(users)
-
-  return newUser
+  return await res.json()
 }
 
 export function logoutMock() {
   localStorage.removeItem(AUTH_KEY)
 }
 
-/* ================= Admin seed (TẠO 3 ADMIN MẶC ĐỊNH) ================= */
+/* ================= Admin Seed ================= */
 
+// Hàm này KHÔNG CẦN THIẾT nữa vì bạn đã chạy "npx prisma db seed" trên server rồi.
+// Mình để trống để code cũ gọi vào không bị lỗi.
 export function ensureClientSeedAdmin() {
-  if (typeof window === "undefined") return
-
-  const users = getUsers()
-  let hasChange = false
-
-  // Danh sách 3 admin cần cấp
-  const adminsToSeed = [
-    { email: "NguyenDuyAn@gmail.com", name: "Nguyễn Duy An" },
-    { email: "Trung@gmail.com", name: "Trung" },
-    { email: "Vinh@gmail.com", name: "Vinh" },
-  ]
-
-  adminsToSeed.forEach((seed) => {
-    // Tìm xem email đã tồn tại chưa (không phân biệt hoa thường)
-    const idx = users.findIndex(u => u.email.toLowerCase() === seed.email.toLowerCase())
-
-    if (idx === -1) {
-      // Chưa có -> Tạo mới làm Admin
-      users.push({
-        email: seed.email,
-        password: "admin@123",
-        name: seed.name,
-        role: "admin", // Role chữ thường để khớp logic check
-      })
-      hasChange = true
-    } else {
-      // Đã có -> Cập nhật lại Role thành admin và Password mặc định
-      const u = users[idx]
-      // Nếu chưa phải admin hoặc pass khác thì cập nhật lại
-      if (u.role !== "admin" || u.password !== "admin@123") {
-        users[idx] = { ...u, role: "admin", password: "admin@123" }
-        hasChange = true
-      }
-    }
-  })
-
-  if (hasChange) {
-    saveUsers(users)
-  }
+  // Do nothing. Dữ liệu thật đã có trên Neon.
+  return
 }
 
-/* ================= Admin helpers ================= */
+/* ================= Admin Helpers (Chuyển sang gọi API) ================= */
+// Lưu ý: Các hàm dưới đây cần bạn tạo thêm API Route tương ứng (ví dụ: /api/users)
+// Hiện tại mình sẽ viết code gọi API chờ sẵn.
 
-export function listUsers(): User[] {
-  return getUsers()
+export async function listUsers(): Promise<User[]> {
+  // Gọi API lấy danh sách user (Cần tạo file app/api/users/route.ts)
+  const res = await fetch("/api/users")
+  if (!res.ok) return [] // Hoặc throw error
+  return await res.json()
 }
 
-export function updateProfile(email: string, data: { name?: string }) {
-  const users = getUsers()
-  const idx = users.findIndex((u) => u.email === email)
-  if (idx === -1) throw new Error("User not found")
-
-  users[idx] = { ...users[idx], ...data }
-  saveUsers(users)
-
-  // Cập nhật cả session hiện tại nếu đúng là người đang login
+export async function updateProfile(email: string, data: { name?: string }) {
+  // Gọi API update profile (Cần tạo route)
+  // Tạm thời chỉ update ở localStorage để UI phản hồi ngay (Optimistic update)
   const currentUser = getStoredUser()
   if (currentUser?.email === email) {
-    localStorage.setItem(AUTH_KEY, JSON.stringify(users[idx]))
+    const updated = { ...currentUser, ...data }
+    localStorage.setItem(AUTH_KEY, JSON.stringify(updated))
+    return updated
   }
-  return users[idx]
+  return currentUser
 }
 
-export function changePassword(
-  email: string,
-  oldPassword: string,
-  newPassword: string
-) {
-  const users = getUsers()
-  const user = users.find((u) => u.email === email)
-  if (!user || user.password !== oldPassword)
-    throw new Error("Mật khẩu cũ không đúng")
-
-  user.password = newPassword
-  saveUsers(users)
+export async function changePassword(email: string, oldPassword: string, newPassword: string) {
+  // Cần tạo API đổi mật khẩu
+  throw new Error("Chức năng đổi mật khẩu cần kết nối API Backend")
 }
 
-export function setUserRole(email: string, role: string) {
-  const users = getUsers()
-  const user = users.find((u) => u.email === email)
-  if (!user) throw new Error("User not found")
-  user.role = role
-  saveUsers(users)
+export async function setUserRole(email: string, role: string) {
+  // Cần tạo API set role
+  const res = await fetch("/api/users/role", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, role }),
+  })
+  if (!res.ok) throw new Error("Không thể thay đổi quyền")
 }
 
-export function deleteUser(email: string) {
-  const users = getUsers().filter((u) => u.email !== email)
-  saveUsers(users)
+export async function deleteUser(email: string) {
+  // Cần tạo API xóa user
+  const res = await fetch(`/api/users?email=${email}`, {
+    method: "DELETE",
+  })
+  
+  if (!res.ok) throw new Error("Không thể xóa người dùng")
 
   const current = getStoredUser()
   if (current?.email === email) {
@@ -163,17 +127,12 @@ export function deleteUser(email: string) {
   }
 }
 
-export function setPassword(email: string, newPassword: string) {
-  const users = getUsers()
-  const user = users.find((u) => u.email === email)
-  if (!user) throw new Error("User not found")
-  user.password = newPassword
-  saveUsers(users)
+export async function setPassword(email: string, newPassword: string) {
+   // Cần tạo API admin set password
+   throw new Error("Chức năng admin đặt lại mật khẩu cần API Backend")
 }
 
-// Hàm getUserPassword (đã thêm lại để không bị lỗi nếu lỡ code cũ còn gọi)
+// Hàm này không nên dùng ở Client nữa vì lý do bảo mật (API không được trả password về)
 export function getUserPassword(email: string) {
-  const users = getUsers()
-  const user = users.find((u) => u.email === email)
-  return user ? user.password : null
+  return null
 }
