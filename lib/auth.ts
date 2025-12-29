@@ -28,8 +28,9 @@ export function getStoredUser(): User | null {
 
 export async function loginMock(email: string, password: string): Promise<User> {
   const users = getUsers()
+  // So sánh email không phân biệt hoa thường
   const user = users.find(
-    (u) => u.email === email && u.password === password
+    (u) => u.email.toLowerCase() === email.toLowerCase() && u.password === password
   )
   if (!user) throw new Error("Sai email hoặc mật khẩu")
 
@@ -43,7 +44,7 @@ export async function registerMock(
   name?: string
 ): Promise<User> {
   const users = getUsers()
-  if (users.some((u) => u.email === email)) {
+  if (users.some((u) => u.email.toLowerCase() === email.toLowerCase())) {
     throw new Error("Email đã tồn tại")
   }
 
@@ -51,7 +52,7 @@ export async function registerMock(
     email,
     password,
     name,
-    role: "ACCOUNTANT",
+    role: "user", // Mặc định là user thường
   }
 
   users.push(newUser)
@@ -64,21 +65,46 @@ export function logoutMock() {
   localStorage.removeItem(AUTH_KEY)
 }
 
-/* ================= Admin seed (CHỈ TẠO USER, KHÔNG LOGIN) ================= */
+/* ================= Admin seed (TẠO 3 ADMIN MẶC ĐỊNH) ================= */
 
 export function ensureClientSeedAdmin() {
   if (typeof window === "undefined") return
 
   const users = getUsers()
-  const hasAdmin = users.some((u) => u.role === "ADMIN")
+  let hasChange = false
 
-  if (!hasAdmin) {
-    users.push({
-      email: "NguyenDuyAN@gmail.com",
-      password: "admin@123",
-      name: "Admin",
-      role: "ADMIN",
-    })
+  // Danh sách 3 admin cần cấp
+  const adminsToSeed = [
+    { email: "NguyenDuyAn@gmail.com", name: "Nguyễn Duy An" },
+    { email: "Trung@gmail.com", name: "Trung" },
+    { email: "Vinh@gmail.com", name: "Vinh" },
+  ]
+
+  adminsToSeed.forEach((seed) => {
+    // Tìm xem email đã tồn tại chưa (không phân biệt hoa thường)
+    const idx = users.findIndex(u => u.email.toLowerCase() === seed.email.toLowerCase())
+
+    if (idx === -1) {
+      // Chưa có -> Tạo mới làm Admin
+      users.push({
+        email: seed.email,
+        password: "admin@123",
+        name: seed.name,
+        role: "admin", // Role chữ thường để khớp logic check
+      })
+      hasChange = true
+    } else {
+      // Đã có -> Cập nhật lại Role thành admin và Password mặc định
+      const u = users[idx]
+      // Nếu chưa phải admin hoặc pass khác thì cập nhật lại
+      if (u.role !== "admin" || u.password !== "admin@123") {
+        users[idx] = { ...u, role: "admin", password: "admin@123" }
+        hasChange = true
+      }
+    }
+  })
+
+  if (hasChange) {
     saveUsers(users)
   }
 }
@@ -97,7 +123,11 @@ export function updateProfile(email: string, data: { name?: string }) {
   users[idx] = { ...users[idx], ...data }
   saveUsers(users)
 
-  localStorage.setItem(AUTH_KEY, JSON.stringify(users[idx]))
+  // Cập nhật cả session hiện tại nếu đúng là người đang login
+  const currentUser = getStoredUser()
+  if (currentUser?.email === email) {
+    localStorage.setItem(AUTH_KEY, JSON.stringify(users[idx]))
+  }
   return users[idx]
 }
 
@@ -139,4 +169,11 @@ export function setPassword(email: string, newPassword: string) {
   if (!user) throw new Error("User not found")
   user.password = newPassword
   saveUsers(users)
+}
+
+// Hàm getUserPassword (đã thêm lại để không bị lỗi nếu lỡ code cũ còn gọi)
+export function getUserPassword(email: string) {
+  const users = getUsers()
+  const user = users.find((u) => u.email === email)
+  return user ? user.password : null
 }
