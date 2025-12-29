@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/components/AuthProvider"; // Sửa đường dẫn nếu cần
+import { useAuth } from "../components/AuthProvider";
 
 export default function AdminLayout({
   children,

@@ -1,9 +1,9 @@
-"use client"
+"use client";
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../components/AuthProvider';
-import { getUserPassword } from '../../../lib/auth';
+// ❌ Đã xóa dòng import getUserPassword
 
 export default function AdminUsersPage() {
   const router = useRouter();
@@ -12,22 +12,20 @@ export default function AdminUsersPage() {
   const [loading, setLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState<any | null>(null);
   const [newPassword, setNewPassword] = useState('');
-  const [revealedPassword, setRevealedPassword] = useState<string | null>(null);
+  
+  // ❌ Đã xóa state revealedPassword
 
   useEffect(() => {
     if (!user) {
       router.push('/login');
       return;
     }
-    // Trước đây trang này chỉ dành cho admin; kiểm tra vai trò đã bị bỏ để bất kỳ người dùng đã xác thực nào cũng có thể truy cập
-
     async function load() {
       setLoading(true);
       const all = await listUsers();
       setUsers(all);
       setLoading(false);
     }
-
     load();
   }, [user, listUsers, router]);
 
@@ -70,16 +68,7 @@ export default function AdminUsersPage() {
     }
   }
 
-  function handleRevealPassword(email: string) {
-    if (!user || user.role !== 'admin') return alert('Không có quyền');
-    if (!email) return;
-    // Không hiển thị mật khẩu cho người dùng admin
-    const target = selectedUser;
-    if (target && target.role === 'admin') return alert('Không được hiển thị mật khẩu của admin khác');
-    const p = getUserPassword(email);
-    if (!p) return alert('Không tìm thấy mật khẩu');
-    setRevealedPassword(p);
-  }
+  // ❌ Đã xóa function handleRevealPassword
 
   const rolesBase = ['user', 'accountant', 'manager', 'admin'];
   const specialRole = 'user_manager';
@@ -164,19 +153,7 @@ export default function AdminUsersPage() {
                     <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="border rounded px-3 py-2 flex-1" placeholder="Mật khẩu mới" />
                     <button onClick={handleSetPassword} className="bg-amber-500 text-white px-4 py-2 rounded">Đặt</button>
                   </div>
-                  <div className="mt-2">
-                    {user?.role === 'admin' && selectedUser?.role !== 'admin' && (
-                      <>
-                        <button onClick={() => { if (revealedPassword) { setRevealedPassword(null); } else { handleRevealPassword(selectedUser.email); } }} className="mt-2 bg-sky-500 text-white px-3 py-1 rounded mr-2">
-                          {revealedPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
-                        </button>
-                        {revealedPassword && <div className="mt-2 p-2 bg-slate-100 rounded">Mật khẩu: <span className="font-mono">{revealedPassword}</span></div>}
-                      </>
-                    )}
-                    {user?.role === 'admin' && selectedUser?.role === 'admin' && (
-                      <div className="mt-2 text-sm text-gray-600">Không hiển thị mật khẩu của admin khác</div>
-                    )}
-                  </div>
+                  {/* ❌ Đã xóa nút hiện mật khẩu ở đây */}
                 </div>
                 <div className="flex justify-between">
                   <button onClick={() => { if (confirm(`Xác nhận xóa ${selectedUser.email}?`)) { handleDelete(selectedUser.email); closeManage(); } }} className="bg-red-500 text-white px-4 py-2 rounded">Xóa người dùng</button>
