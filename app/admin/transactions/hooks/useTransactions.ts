@@ -11,13 +11,14 @@ import {
   Account,
 } from "../../../../lib/mockService";
 
-export function useTransactions(user: any) {
+// 👇 THÊM CHỮ "default" VÀO ĐÂY
+export default function useTransactions(user: any) {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Form states - QUAN TRỌNG: Cho phép string hoặc number
+  // Form states
   const [amount, setAmount] = useState<number | "">("");
   const [description, setDescription] = useState("");
   const [categoryId, setCategoryId] = useState<string | number>(""); 
@@ -45,7 +46,6 @@ export function useTransactions(user: any) {
       setCategories(cats);
       setAccounts(accs);
 
-      // Set default selections
       if (cats.length > 0) setCategoryId(cats[0].id);
       if (accs.length > 0) setAccountId(accs[0].id);
     } catch (error) {
@@ -73,19 +73,16 @@ export function useTransactions(user: any) {
         accountName: accName,
         description,
         performedBy: user?.name || user?.email,
-        approved: false, // Mặc định chưa duyệt
-        received: false, // Mặc định chưa thu
+        approved: false,
+        received: false,
       });
 
       setTransactions([newTx, ...transactions]);
-      
-      // Reset form
       setAmount("");
       setDescription("");
       setDate(new Date().toISOString().slice(0, 16));
     } catch (error) {
       console.error("Add failed", error);
-      alert("Lỗi khi thêm giao dịch");
     }
   }
 
@@ -101,7 +98,6 @@ export function useTransactions(user: any) {
     }
   }
 
-  // Edit logic
   function startEditTransaction(t: Transaction) {
     setEditingTransaction(t);
     setEditTransactionData(t);
@@ -124,7 +120,6 @@ export function useTransactions(user: any) {
       }
     } catch (error) {
       console.error(error);
-      alert("Lỗi khi cập nhật");
     }
   }
 
@@ -146,7 +141,6 @@ export function useTransactions(user: any) {
     categories,
     accounts,
     loading,
-    // Form props
     amount, setAmount,
     description, setDescription,
     categoryId, setCategoryId,
@@ -155,7 +149,6 @@ export function useTransactions(user: any) {
     date, setDate,
     handleAdd,
     handleDelete,
-    // Edit props
     editingTransaction,
     editTransactionData,
     setEditTransactionData,

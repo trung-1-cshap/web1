@@ -7,7 +7,8 @@ import {
   Customer,
 } from "../../../../lib/mockService";
 
-export function useCustomers(user: any) {
+// 👇 THÊM CHỮ "default" VÀO ĐÂY
+export default function useCustomers(user: any) {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -66,7 +67,6 @@ export function useCustomers(user: any) {
     await handleUpdateCustomer(id, { received: val });
   }
 
-  // ✅ FIX: Đảm bảo trường approvedBy khớp với mockService
   async function handleApproveCustomer(id: string) {
     if (!confirm("Duyệt khách hàng này?")) return;
     const approver = user?.name ?? user?.email ?? 'system';
