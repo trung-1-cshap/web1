@@ -87,13 +87,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   async function updateProfile(data: { name?: string }) {
     if (!user) return;
-    const updated = updateProfileMock(user.email, data);
+    const updated = await updateProfileMock(user.email, data);
     setUser(updated);
   }
 
   async function changePassword(oldP: string, newP: string) {
     if (!user) return;
-    changePasswordMock(user.email, oldP, newP);
+    await changePasswordMock(user.email, oldP, newP);
   }
 
   async function listUsers() {
