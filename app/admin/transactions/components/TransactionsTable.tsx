@@ -30,7 +30,6 @@ export default function TransactionsTable({
   cancelEditTransaction,
   handleDelete,
 }: Props) {
-  // Bảo vệ mảng items
   const safeItems = Array.isArray(items) ? items : [];
 
   return (
@@ -40,7 +39,7 @@ export default function TransactionsTable({
           <tr>
             <th className="px-4 py-3">Ngày</th>
             <th className="px-4 py-3">Người nhập</th>
-            {/* ❌ Đã xóa cột Người thực hiện (actorName) */}
+            {/* Đã xóa cột ActorName */}
             <th className="px-4 py-3">Số tiền</th>
             <th className="px-4 py-3">Loại</th>
             <th className="px-4 py-3">Danh mục</th>
@@ -54,7 +53,7 @@ export default function TransactionsTable({
 
             return (
               <tr key={it.id} className="border-b hover:bg-gray-50">
-                {/* 1. NGÀY THÁNG */}
+                {/* 1. NGÀY */}
                 <td className="px-4 py-3">
                   {isEditing ? (
                     <input
@@ -77,12 +76,10 @@ export default function TransactionsTable({
                   )}
                 </td>
 
-                {/* 2. NGƯỜI NHẬP (Chỉ xem, không sửa) */}
+                {/* 2. NGƯỜI NHẬP */}
                 <td className="px-4 py-3 text-gray-500">
                   {it.performedBy ?? user?.name ?? "Admin"}
                 </td>
-
-                {/* ❌ Đã xóa ô input actorName gây lỗi ở đây */}
 
                 {/* 3. SỐ TIỀN */}
                 <td className="px-4 py-3 font-medium">
@@ -103,7 +100,7 @@ export default function TransactionsTable({
                   )}
                 </td>
 
-                {/* 4. LOẠI (THU/CHI) */}
+                {/* 4. LOẠI */}
                 <td className="px-4 py-3">
                   {isEditing ? (
                     <select
@@ -216,14 +213,6 @@ export default function TransactionsTable({
               </tr>
             );
           })}
-          
-          {safeItems.length === 0 && (
-            <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-gray-400 italic">
-                    Chưa có giao dịch nào
-                </td>
-            </tr>
-          )}
         </tbody>
       </table>
     </div>
