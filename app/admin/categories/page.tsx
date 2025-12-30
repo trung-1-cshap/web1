@@ -52,7 +52,7 @@ export default function AdminCategoriesPage() {
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6">Quản lý Danh mục</h1>
+      <h1 className="text-2xl font-bold mb-6">Quản Lý Danh Mục</h1>
 
       {/* Form thêm danh mục */}
       <form onSubmit={handleAdd} className="flex gap-2 mb-8 bg-white p-4 rounded shadow">
