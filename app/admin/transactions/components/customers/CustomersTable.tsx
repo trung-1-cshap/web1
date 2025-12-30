@@ -55,9 +55,10 @@ export default function CustomersTable({
                 {c.contractAmount != null ? formatVND(c.contractAmount) : "-"}
               </td>
               <td className="px-4 py-3 text-center">
-                {c.contractValidityMonths != null && c.contractValidityMonths !== ''
-                  ? `${c.contractValidityMonths} tháng`
-                  : "-"}
+               {typeof c.contractValidityMonths === "number"
+  ? `${c.contractValidityMonths} tháng`
+  : "-"}
+
               </td>
               <td className="px-4 py-3 text-right font-bold text-green-600">
                 {c.commission != null && (c.contractAmount ?? c.depositAmount) != null
