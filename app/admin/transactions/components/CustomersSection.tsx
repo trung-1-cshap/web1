@@ -33,6 +33,7 @@ export default function CustomersSection({
   const [newPhone, setNewPhone] = useState("");
   const [newDeposit, setNewDeposit] = useState<number | "">("");
   const [newContract, setNewContract] = useState<number | "">("");
+  const [newContractMonths, setNewContractMonths] = useState<number | "">("");
   const [newCommission, setNewCommission] = useState<number | "">("");
 
   // State cho form sửa
@@ -40,6 +41,7 @@ export default function CustomersSection({
   const [editPhone, setEditPhone] = useState("");
   const [editDeposit, setEditDeposit] = useState<number | "">("");
   const [editContract, setEditContract] = useState<number | "">("");
+  const [editContractMonths, setEditContractMonths] = useState<number | "">("");
   const [editCommission, setEditCommission] = useState<number | "">("");
 
   // Bắt đầu sửa
@@ -49,6 +51,7 @@ export default function CustomersSection({
     setEditPhone(c.phone || "");
     setEditDeposit(c.depositAmount || "");
     setEditContract(c.contractAmount || "");
+    setEditContractMonths(c.contractValidityMonths ?? "");
     setEditCommission(c.commission || "");
     setIsEditing(true);
   }
@@ -67,6 +70,7 @@ export default function CustomersSection({
       phone: editPhone,
       depositAmount: editDeposit === "" ? 0 : Number(editDeposit),
       contractAmount: editContract === "" ? 0 : Number(editContract),
+      contractValidityMonths: editContractMonths === "" ? undefined : Number(editContractMonths),
       commission: editCommission === "" ? 0 : Number(editCommission),
     });
     cancelEdit();
@@ -81,6 +85,7 @@ export default function CustomersSection({
       phone: newPhone,
       depositAmount: newDeposit === "" ? 0 : Number(newDeposit),
       contractAmount: newContract === "" ? 0 : Number(newContract),
+      contractValidityMonths: newContractMonths === "" ? undefined : Number(newContractMonths),
       commission: newCommission === "" ? 0 : Number(newCommission),
       received: false,
       approved: false,
@@ -90,6 +95,7 @@ export default function CustomersSection({
     setNewPhone("");
     setNewDeposit("");
     setNewContract("");
+    setNewContractMonths("");
     setNewCommission("");
   }
 
@@ -102,7 +108,7 @@ export default function CustomersSection({
       {/* Form thêm khách hàng */}
       <form onSubmit={onAdd} className="bg-gray-50 p-4 rounded mb-6 border border-gray-200">
         <h4 className="font-medium mb-3 text-gray-700">Thêm khách hàng mới</h4>
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
           <input
             className="border p-2 rounded"
             placeholder="Tên khách hàng (*)"
@@ -129,6 +135,13 @@ export default function CustomersSection({
             placeholder="Tiền Hợp đồng"
             value={newContract}
             onChange={(e) => setNewContract(e.target.value ? Number(e.target.value) : "")}
+          />
+          <input
+            type="number"
+            className="border p-2 rounded"
+            placeholder="Số tháng hợp đồng"
+            value={newContractMonths}
+            onChange={(e) => setNewContractMonths(e.target.value ? Number(e.target.value) : "")}
           />
           <div className="flex gap-2">
             <input
@@ -163,7 +176,7 @@ export default function CustomersSection({
                 value={editPhone}
                 onChange={(e) => setEditPhone(e.target.value)}
               />
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-3 gap-2">
                 <input
                     type="number"
                     className="border p-2 rounded"
@@ -177,6 +190,13 @@ export default function CustomersSection({
                     placeholder="Tiền HĐ"
                     value={editContract}
                     onChange={(e) => setEditContract(e.target.value ? Number(e.target.value) : "")}
+                />
+                <input
+                    type="number"
+                    className="border p-2 rounded"
+                    placeholder="Số tháng hợp đồng"
+                    value={editContractMonths}
+                    onChange={(e) => setEditContractMonths(e.target.value ? Number(e.target.value) : "")}
                 />
               </div>
               <input
