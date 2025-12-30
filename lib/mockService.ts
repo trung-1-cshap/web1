@@ -98,6 +98,18 @@ export function getTransactions(): Promise<Transaction[]> {
   return Promise.resolve([]);
 }
 
+export function getDeletedTransactions(): Promise<Transaction[]> {
+  if (typeof window !== 'undefined') {
+    return fetch('/api/transactions?deleted=true')
+      .then(async (r) => {
+        if (!r.ok) return [];
+        return r.json();
+      })
+      .catch(() => []);
+  }
+  return Promise.resolve([]);
+}
+
 export function addTransaction(payload: Omit<Transaction, "id">): Promise<Transaction> {
   if (typeof window !== 'undefined') {
     const email = getCurrentUserEmail();
@@ -137,6 +149,17 @@ export function deleteTransaction(id: string | number): Promise<boolean> {
       method: 'DELETE',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ id })
+    }).then((r) => r.ok);
+  }
+  return Promise.resolve(false);
+}
+
+export function permanentlyDeleteTransaction(id: string | number): Promise<boolean> {
+  if (typeof window !== 'undefined') {
+    return fetch('/api/transactions', {
+      method: 'DELETE',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ id, permanent: true })
     }).then((r) => r.ok);
   }
   return Promise.resolve(false);
