@@ -16,6 +16,7 @@ type Props = {
   saveEditTransaction: () => Promise<void>;
   cancelEditTransaction: () => void;
   handleDelete: (id: string) => Promise<void> | void;
+  toggleTransactionReceived: (id: string, val: boolean) => Promise<void> | void;
 };
 
 export default function TransactionsTable({
@@ -29,6 +30,7 @@ export default function TransactionsTable({
   saveEditTransaction,
   cancelEditTransaction,
   handleDelete,
+  toggleTransactionReceived,
 }: Props) {
   const safeItems = Array.isArray(items) ? items : [];
 
@@ -210,6 +212,17 @@ export default function TransactionsTable({
                     </div>
                   )}
                 </td>
+                  {/* 8. ĐÃ THU */}
+                  <td className="px-4 py-3 text-center">
+                    <input
+                      type="checkbox"
+                      className="w-4 h-4 text-green-600 rounded"
+                      checked={Boolean(it.received)}
+                      onChange={(e) =>
+                        toggleTransactionReceived && toggleTransactionReceived(String(it.id), e.target.checked)
+                      }
+                    />
+                  </td>
               </tr>
             );
           })}

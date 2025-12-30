@@ -7,13 +7,7 @@ export const runtime = "nodejs";
 export async function GET() {
   try {
     const prisma = getPrisma();
-    const url = new URL((globalThis as any).location?.href || "http://localhost");
-    const deleted = url.searchParams.get("deleted");
-
-    const where = deleted === "true" ? { deleted: true } : { deleted: false };
-
     const txs = await prisma.transaction.findMany({
-      where,
       orderBy: { createdAt: "desc" },
       include: {
         category: { select: { id: true, name: true } },
@@ -170,12 +164,6 @@ export async function PUT(req: Request) {
         : null;
     }
 
-    // Support restore/un-delete via setting deleted=false
-    if (data.deleted !== undefined) {
-      updateData.deleted = Boolean(data.deleted);
-      updateData.deletedAt = data.deleted ? new Date() : null;
-    }
-
     const updated = await prisma.transaction.update({
       where: { id: Number(id) },
       data: updateData,
@@ -195,25 +183,17 @@ export async function PUT(req: Request) {
 export async function DELETE(req: Request) {
   try {
     const prisma = getPrisma();
-    const body = await req.json();
-    const { id, permanent } = body || {};
+    const { id } = await req.json();
 
     if (!id) {
       return NextResponse.json({ error: "Thiếu id" }, { status: 400 });
     }
 
-    if (permanent) {
-      await prisma.transaction.delete({ where: { id: Number(id) } });
-      return NextResponse.json({ ok: true, deleted: true });
-    }
-
-    // Soft-delete: mark deleted=true and set deletedAt
-    await prisma.transaction.update({
+    await prisma.transaction.delete({
       where: { id: Number(id) },
-      data: { deleted: true, deletedAt: new Date() },
     });
 
-    return NextResponse.json({ ok: true, softDeleted: true });
+    return NextResponse.json({ ok: true });
   } catch (err) {
     console.error("DELETE /api/transactions error:", err);
     return NextResponse.json(

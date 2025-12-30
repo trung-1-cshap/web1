@@ -28,6 +28,7 @@ export default function TransactionsSection({
   user,
   handleDeleteTransaction,
   handleAddTransaction,
+    toggleTransactionReceived,
   
   // Truyền props xuống Table
   editingTransaction,
@@ -112,6 +113,7 @@ export default function TransactionsSection({
                 categories={categories}
                 user={user}
                 handleDelete={handleDeleteTransaction}
+                toggleTransactionReceived={toggleTransactionReceived}
                 editingTransaction={editingTransaction}
                 editTransactionData={editTransactionData}
                 setEditTransactionData={setEditTransactionData}

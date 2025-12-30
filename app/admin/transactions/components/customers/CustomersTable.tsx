@@ -11,6 +11,7 @@ type Props = {
   startEditCustomer: (c: Customer) => void;
   handleDeleteCustomer: (id: string) => Promise<void> | void;
   handleApproveCustomer: (id: string) => Promise<void> | void;
+  toggleCustomerReceived?: (id: string, val: boolean) => Promise<void> | void;
 };
 
 export default function CustomersTable({
@@ -19,6 +20,7 @@ export default function CustomersTable({
   startEditCustomer,
   handleDeleteCustomer,
   handleApproveCustomer,
+  toggleCustomerReceived,
 }: Props) {
   // Safe check array
   const safeCustomers = Array.isArray(customers) ? customers : [];
@@ -108,6 +110,22 @@ export default function CustomersTable({
                     <span className="text-xs text-yellow-600 bg-yellow-50 px-2 py-1 rounded">
                       Chờ duyệt
                     </span>
+                  )}
+
+                  {/* Nút Thu (Đánh dấu đã thu) */}
+                  {c.received ? (
+                    <span className="text-xs text-green-700 border border-green-100 bg-green-50 px-2 py-1 rounded">
+                      Đã thu
+                    </span>
+                  ) : canApproveTransaction(user) ? (
+                    <button
+                      className="text-xs bg-yellow-600 text-white px-2 py-1 rounded hover:bg-yellow-700"
+                      onClick={() => toggleCustomerReceived && toggleCustomerReceived(String(c.id), true)}
+                    >
+                      Thu
+                    </button>
+                  ) : (
+                    <span className="text-xs text-gray-300">-</span>
                   )}
                 </div>
               </td>

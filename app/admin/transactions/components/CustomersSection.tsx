@@ -223,6 +223,7 @@ export default function CustomersSection({
         handleDeleteCustomer={handleDeleteCustomer}
         // ✅ FIX LỖI Ở ĐÂY: Thêm hàm dự phòng (async () => {}) nếu handleApproveCustomer bị null
         handleApproveCustomer={handleApproveCustomer ?? (async () => {})}
+        toggleCustomerReceived={toggleCustomerReceived}
       />
     </div>
   );

@@ -1,37 +1,29 @@
 "use client"
 
 import { useEffect, useState } from "react";
-import { type Transaction, addTransaction, deleteTransaction, getDeletedTransactions, permanentlyDeleteTransaction, updateTransaction } from "../../../../lib/mockService";
+import { type Transaction, addTransaction, deleteTransaction } from "../../../../lib/mockService";
 
 export default function useTrash(items: Transaction[], setItems: (v: Transaction[] | ((s: Transaction[]) => Transaction[])) => void, user?: any, setFlashMsg?: (s: string | null) => void) {
-  const [trash, setTrash] = useState<Transaction[]>([]);
+  const [trash, setTrash] = useState<Transaction[]>(() => {
+    if (typeof window === 'undefined') return [];
+    try { return JSON.parse(localStorage.getItem('transactions_trash') || '[]'); } catch { return []; }
+  });
 
   useEffect(() => {
-    let mounted = true;
-    (async () => {
-      try {
-        const data = await getDeletedTransactions();
-        if (mounted) setTrash(Array.isArray(data) ? data : []);
-      } catch (err) {
-        console.warn('load deleted transactions failed', err);
-      }
-    })();
-    return () => { mounted = false };
-  }, []);
+    if (typeof window !== 'undefined') {
+      try { localStorage.setItem('transactions_trash', JSON.stringify(trash)); } catch {}
+    }
+  }, [trash]);
 
   async function handleDelete(id: string) {
     if (!user || user.role !== 'admin') { alert('Chỉ admin mới có quyền xóa'); return; }
     const it = items.find((t) => String(t.id) === String(id));
     if (!it) return;
     setItems((s) => s.filter((t) => String(t.id) !== String(id)));
+    setTrash((s) => [it, ...s]);
     setFlashMsg?.('Đã chuyển giao dịch vào Thùng rác');
     window.setTimeout(() => setFlashMsg?.(null), 3000);
-    try {
-      await deleteTransaction(it.id); // server soft-delete
-      // refresh trash from server
-      const data = await getDeletedTransactions();
-      setTrash(Array.isArray(data) ? data : []);
-    } catch (err) { console.warn('handleDelete: deleteTransaction failed', err); }
+    try { await deleteTransaction(it.id); } catch (err) { console.warn('handleDelete: deleteTransaction failed', err); }
   }
 
   function restoreFromTrash(id: string) {
@@ -53,20 +45,15 @@ export default function useTrash(items: Transaction[], setItems: (v: Transaction
       } catch (err) {
         console.error('restoreFromTrash failed', err);
         setItems((s) => [entry, ...s]);
-        } finally {
-          // after restore, update server to clear deleted flag
-          try { await updateTransaction(id, { deleted: false }); } catch (e) { console.warn('restore: updateTransaction failed', e); }
-          // refresh trash
-          try { const data = await getDeletedTransactions(); setTrash(Array.isArray(data) ? data : []); } catch {}
-        }
+      } finally {
+        setTrash((s) => s.filter((t) => String(t.id) !== String(id)));
+      }
     })();
   }
 
   async function permanentlyDelete(id: string) {
     if (!user || user.role !== 'admin') { alert('Chỉ admin mới có quyền xóa'); return; }
-    try {
-      await permanentlyDeleteTransaction(id);
-    } catch (err) { console.warn('permanentlyDelete: server delete failed', err); }
+    try { await deleteTransaction(id); } catch (err) { console.warn('permanentlyDelete: server delete failed', err); }
     setTrash((s) => s.filter((t) => String(t.id) !== String(id)));
   }
 
