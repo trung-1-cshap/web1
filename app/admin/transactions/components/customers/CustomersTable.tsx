@@ -32,6 +32,7 @@ export default function CustomersTable({
             <th className="px-4 py-3">SĐT</th>
             <th className="px-4 py-3 text-right">Tiền cọc</th>
             <th className="px-4 py-3 text-right">Tiền HĐ</th>
+            <th className="px-4 py-3 text-center">Số tháng</th>
             <th className="px-4 py-3 text-right">Hoa hồng</th>
             <th className="px-4 py-3 text-center">%</th>
             <th className="px-4 py-3">Ngày tạo</th>
@@ -52,6 +53,11 @@ export default function CustomersTable({
               </td>
               <td className="px-4 py-3 text-right text-gray-600">
                 {c.contractAmount != null ? formatVND(c.contractAmount) : "-"}
+              </td>
+              <td className="px-4 py-3 text-center">
+                {c.contractValidityMonths != null && c.contractValidityMonths !== ''
+                  ? `${c.contractValidityMonths} tháng`
+                  : "-"}
               </td>
               <td className="px-4 py-3 text-right font-bold text-green-600">
                 {c.commission != null && (c.contractAmount ?? c.depositAmount) != null
