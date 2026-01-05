@@ -63,9 +63,15 @@ export default function CustomersTable({
 
               </td>
               <td className="px-4 py-3 text-right font-bold text-green-600">
-                {c.commission != null && (c.contractAmount ?? c.depositAmount) != null
-                  ? formatVND(Math.round(Number(c.contractAmount ?? c.depositAmount) * (Number(c.commission) / 100)))
-                  : "-"}
+                {(() => {
+                  if (c.commission == null) return "-";
+                  const contract = c.contractAmount != null ? Number(c.contractAmount) : NaN;
+                  const deposit = c.depositAmount != null ? Number(c.depositAmount) : NaN;
+                  const base = Number.isFinite(contract) && contract > 0 ? contract : (Number.isFinite(deposit) ? deposit : null);
+                  return base != null
+                    ? formatVND(Math.round(base * (Number(c.commission) / 100)))
+                    : "-";
+                })()}
               </td>
               <td className="px-4 py-3 text-center">
                 {c.commission != null ? `${c.commission}%` : "-"}
