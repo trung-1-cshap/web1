@@ -16,7 +16,7 @@ export function getPrisma() {
       ],
     });
 
-    global.prisma.$on("query", (e) => {
+    (global.prisma as any).$on("query", (e: any) => {
       try {
         console.debug("[prisma][query]", e.query, e.params, "durationMs:", e.duration);
       } catch (err) {
@@ -24,9 +24,9 @@ export function getPrisma() {
       }
     });
 
-    global.prisma.$on("info", (e) => console.info("[prisma][info]", e.message));
-    global.prisma.$on("warn", (e) => console.warn("[prisma][warn]", e.message));
-    global.prisma.$on("error", (e) => console.error("[prisma][error]", e.message));
+    (global.prisma as any).$on("info", (e: any) => console.info("[prisma][info]", e.message));
+    (global.prisma as any).$on("warn", (e: any) => console.warn("[prisma][warn]", e.message));
+    (global.prisma as any).$on("error", (e: any) => console.error("[prisma][error]", e.message));
   }
   return global.prisma;
 }
