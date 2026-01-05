@@ -56,7 +56,7 @@ export default function TransactionsPage() {
   return (
     <div className="p-4 md:p-6 max-w-[1400px] mx-auto">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-        <h1 className="text-2xl font-bold text-slate-800">Quản lý Thu Chi & Khách hàng</h1>
+        <h1 className="text-2xl font-bold text-slate-800">QUẢN LÝ GIAO DỊCH</h1>
         <div className="text-sm text-gray-500">
           Xin chào, <span className="font-semibold text-slate-700">{user?.name || "Admin"}</span>
         </div>

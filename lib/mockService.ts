@@ -82,6 +82,9 @@ export type Transaction = {
   approved?: boolean;
   approvedBy?: string | null;
   approvedAt?: string | null;
+  // Soft-delete fields
+  deleted?: boolean;
+  deletedAt?: string | null;
   user?: { name: string; email: string };
   createdAt?: string; 
 };
