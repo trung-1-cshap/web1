@@ -14,6 +14,7 @@ import {
 // 👇 THÊM CHỮ "default" VÀO ĐÂY
 export default function useTransactions(user: any) {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [trash, setTrash] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(true);
@@ -37,12 +38,14 @@ export default function useTransactions(user: any) {
   async function loadData() {
     setLoading(true);
     try {
-      const [txs, cats, accs] = await Promise.all([
-        getTransactions(),
+      const [txs, deletedTxs, cats, accs] = await Promise.all([
+        getTransactions(false),
+        getTransactions(true),
         getCategories(),
         getAccounts(),
       ]);
       setTransactions(txs);
+      setTrash(deletedTxs);
       setCategories(cats);
       setAccounts(accs);
 
@@ -55,32 +58,58 @@ export default function useTransactions(user: any) {
     }
   }
 
-  async function handleAdd(e: React.FormEvent) {
-    e.preventDefault();
-    if (!amount || !categoryId || !accountId) return;
+  async function handleAdd(eOrPayload: React.FormEvent | any) {
+    // Support two call styles:
+    // - called from a form: handleAdd(event)
+    // - called with payload: handleAdd({ amount, description, categoryId, ... })
+    let payload: any = null;
 
-    const catName = categories.find((c) => String(c.id) === String(categoryId))?.name;
-    const accName = accounts.find((a) => String(a.id) === String(accountId))?.name;
-
-    try {
-      const newTx = await addTransaction({
+    if (eOrPayload && typeof eOrPayload.preventDefault === "function") {
+      eOrPayload.preventDefault();
+      if (!amount || !categoryId || !accountId) return;
+      payload = {
         date: new Date(date).toISOString(),
         amount: Number(amount),
         type,
         categoryId,
-        categoryName: catName,
-        accountId,
-        accountName: accName,
         description,
+      };
+    } else {
+      payload = eOrPayload || {};
+      if (!payload.amount || !payload.categoryId || !payload.accountId) {
+        // If accountId isn't provided in payload, try to fall back to hook state
+        if (!payload.accountId && accountId) payload.accountId = accountId;
+        if (!payload.amount && amount) payload.amount = amount;
+        if (!payload.categoryId && categoryId) payload.categoryId = categoryId;
+      }
+    }
+
+    const catName = categories.find((c) => String(c.id) === String(payload.categoryId))?.name;
+    const accName = accounts.find((a) => String(a.id) === String(payload.accountId))?.name;
+
+    try {
+      const newTx = await addTransaction({
+        date: payload.date || new Date().toISOString(),
+        amount: Number(payload.amount),
+        type: payload.type || type,
+        categoryId: payload.categoryId,
+        categoryName: catName,
+        accountId: payload.accountId,
+        accountName: accName,
+        description: payload.description || "",
         performedBy: user?.name || user?.email,
-        approved: false,
-        received: false,
+        approved: payload.approved || false,
+        received: payload.received || false,
       });
 
       setTransactions([newTx, ...transactions]);
-      setAmount("");
-      setDescription("");
-      setDate(new Date().toISOString().slice(0, 16));
+
+      // If the call came from the hook's own form, reset hook form state
+      if (eOrPayload && typeof eOrPayload.preventDefault === "function") {
+        setAmount("");
+        setDescription("");
+        setDate(new Date().toISOString().slice(0, 16));
+      }
     } catch (error) {
       console.error("Add failed", error);
     }
@@ -89,10 +118,49 @@ export default function useTransactions(user: any) {
   async function handleDelete(id: string) {
     if (!confirm("Xóa giao dịch này?")) return;
     try {
-      const ok = await deleteTransaction(id);
-      if (ok) {
+      // Soft-delete via PUT (sets `deleted` flag)
+      const updated = await updateTransaction(id, { deleted: true });
+      if (updated) {
         setTransactions(transactions.filter((t) => String(t.id) !== String(id)));
+        setTrash([updated, ...trash]);
+      } else {
+        console.warn("updateTransaction returned null when trying to soft-delete", id);
       }
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  async function restoreFromTrash(id: string) {
+    try {
+      const updated = await updateTransaction(id, { deleted: false, deletedAt: null });
+      if (updated) {
+        setTrash(trash.filter((t) => String(t.id) !== String(id)));
+        setTransactions([updated, ...transactions]);
+      } else {
+        console.warn("updateTransaction returned null when trying to restore from trash", id);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  async function permanentlyDelete(id: string) {
+    try {
+      const ok = await deleteTransaction(id, true);
+      if (ok) {
+        setTrash(trash.filter((t) => String(t.id) !== String(id)));
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  async function permanentlyDeleteAll() {
+    try {
+      const ids = trash.map((t) => String(t.id));
+      await Promise.all(ids.map((id) => deleteTransaction(id, true)));
+      setTrash([]);
     } catch (error) {
       console.error(error);
     }
@@ -117,6 +185,8 @@ export default function useTransactions(user: any) {
           transactions.map((t) => (String(t.id) === String(updated.id) ? updated : t))
         );
         cancelEditTransaction();
+      } else {
+        console.warn("updateTransaction returned null when saving edited transaction", editingTransaction.id);
       }
     } catch (error) {
       console.error(error);
@@ -130,6 +200,8 @@ export default function useTransactions(user: any) {
         setTransactions(
           transactions.map((t) => (String(t.id) === String(updated.id) ? updated : t))
         );
+      } else {
+        console.warn("updateTransaction returned null when toggling received", id, val);
       }
     } catch (error) {
       console.error(error);
@@ -156,5 +228,10 @@ export default function useTransactions(user: any) {
     cancelEditTransaction,
     saveEditTransaction,
     toggleTransactionReceived
+    ,
+    trash,
+    restoreFromTrash,
+    permanentlyDelete,
+    permanentlyDeleteAll
   };
 }

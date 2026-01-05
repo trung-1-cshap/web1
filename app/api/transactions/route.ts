@@ -4,17 +4,25 @@ import { getPrisma } from "@/lib/prisma";
 export const runtime = "nodejs";
 
 /* ================= GET ================= */
-export async function GET() {
+export async function GET(req: Request) {
   try {
     const prisma = getPrisma();
+    const url = new URL(req.url);
+    const deletedParam = url.searchParams.get("deleted");
+    const whereClause: any = {};
+    if (deletedParam === "true") whereClause.deleted = true;
+    else whereClause.deleted = false;
+
     const txs = await prisma.transaction.findMany({
+      where: whereClause,
       orderBy: { createdAt: "desc" },
       include: {
         category: { select: { id: true, name: true } },
         account: { select: { id: true, name: true } },
-        user: { select: { id: true, name: true, email: true } }, // Lấy thêm email để dễ debug
+        user: { select: { id: true, name: true, email: true } },
       },
     });
+
     return NextResponse.json(txs);
   } catch (err) {
     console.error("GET /api/transactions error:", err);
@@ -152,6 +160,12 @@ export async function PUT(req: Request) {
       updateData.accountId = Number(data.accountId);
     }
 
+    // Soft-delete / restore support
+    if (data.deleted !== undefined) {
+      updateData.deleted = Boolean(data.deleted);
+      updateData.deletedAt = data.deleted ? new Date() : null;
+    }
+
     // ❌ Không cho phép update userId trực tiếp qua API này để tránh lỗi
     // Nếu muốn đổi người tạo, logic sẽ phức tạp hơn.
 
@@ -183,17 +197,24 @@ export async function PUT(req: Request) {
 export async function DELETE(req: Request) {
   try {
     const prisma = getPrisma();
-    const { id } = await req.json();
+    const body = await req.json();
+    const { id, permanent } = body;
 
     if (!id) {
       return NextResponse.json({ error: "Thiếu id" }, { status: 400 });
     }
 
-    await prisma.transaction.delete({
+    if (permanent) {
+      await prisma.transaction.delete({ where: { id: Number(id) } });
+      return NextResponse.json({ ok: true, deleted: true });
+    }
+
+    await prisma.transaction.update({
       where: { id: Number(id) },
+      data: { deleted: true, deletedAt: new Date() },
     });
 
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, softDeleted: true });
   } catch (err) {
     console.error("DELETE /api/transactions error:", err);
     return NextResponse.json(

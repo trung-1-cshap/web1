@@ -86,14 +86,15 @@ export type Transaction = {
   createdAt?: string; 
 };
 
-export function getTransactions(): Promise<Transaction[]> {
+export function getTransactions(includeDeleted: boolean = false): Promise<Transaction[]> {
   if (typeof window !== 'undefined') {
-    return fetch('/api/transactions')
+    const url = '/api/transactions' + (includeDeleted ? '?deleted=true' : '');
+    return fetch(url)
       .then(async (r) => {
         if (!r.ok) return [];
         return r.json();
       })
-      .catch(err => []);
+      .catch((err) => []);
   }
   return Promise.resolve([]);
 }
@@ -123,20 +124,36 @@ export function updateTransaction(id: string | number, payload: Partial<Transact
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ id, ...payload })
     }).then(async (r) => {
-      const json = await r.json();
-      if (!r.ok) throw new Error(json.error || "Update failed");
+      // Parse JSON if possible, but handle non-JSON responses safely
+      let json: any = null;
+      try {
+        json = await r.json();
+      } catch (e) {
+        // ignore parse errors
+      }
+
+      if (!r.ok) {
+        // Log server error details to help debugging, then return null
+        try {
+          console.warn("[mockService] updateTransaction failed", { status: r.status, body: json });
+        } catch (e) {
+          console.warn("[mockService] updateTransaction failed and could not log body", r.status);
+        }
+        return null;
+      }
+
       return json;
     });
   }
   return Promise.resolve(null);
 }
 
-export function deleteTransaction(id: string | number): Promise<boolean> {
+export function deleteTransaction(id: string | number, permanent: boolean = false): Promise<boolean> {
   if (typeof window !== 'undefined') {
     return fetch('/api/transactions', {
       method: 'DELETE',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ id })
+      body: JSON.stringify({ id, permanent })
     }).then((r) => r.ok);
   }
   return Promise.resolve(false);

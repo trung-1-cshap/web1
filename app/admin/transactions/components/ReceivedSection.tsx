@@ -33,7 +33,7 @@ export default function ReceivedSection({
 
   return (
     <div className="bg-white border rounded p-4 shadow-sm">
-      <h3 className="font-semibold mb-3 text-lg text-green-700">💰 Quản lý Đã thu</h3>
+      <h3 className="font-semibold mb-3 text-lg text-green-700">Giao Dịch Đã Thu</h3>
 
       {/* ================= GIAO DỊCH ================= */}
       <div className="mb-8">
@@ -138,7 +138,7 @@ export default function ReceivedSection({
                 <th className="p-3 text-right">Cọc</th>
                 <th className="p-3 text-right">Hợp đồng</th>
                 <th className="p-3 text-right">Hoa hồng</th>
-                <th className="p-3 text-center">%</th>
+                <th className="p-3 text-center">% Hoa hồng</th>
                 <th className="p-3 text-left">Ngày tạo</th>
                 <th className="p-3 text-left">Sale</th>
                 <th className="p-3 text-center">Đã thu</th>

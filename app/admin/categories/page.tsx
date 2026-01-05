@@ -67,8 +67,8 @@ export default function AdminCategoriesPage() {
           value={type} 
           onChange={(e) => setType(e.target.value as "thu" | "chi")}
         >
-          <option value="thu">Khoản Thu (Income)</option>
-          <option value="chi">Khoản Chi (Expense)</option>
+          <option value="thu">Khoản Thu </option>
+          <option value="chi">Khoản Chi </option>
         </select>
         <button className="bg-slate-800 text-white px-4 py-2 rounded hover:bg-slate-700">
           Thêm

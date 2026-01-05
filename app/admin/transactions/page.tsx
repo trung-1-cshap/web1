@@ -34,6 +34,10 @@ export default function TransactionsPage() {
     editingTransaction,
     editTransactionData,
     toggleTransactionReceived,
+    trash,
+    restoreFromTrash,
+    permanentlyDelete,
+    permanentlyDeleteAll,
   } = useTransactions(user);
 
   const {
@@ -114,15 +118,15 @@ export default function TransactionsPage() {
 
         {activeTab === "trash" && (
           <TrashSection
-            trash={[]} 
+            trash={trash}
             customersTrash={[]}
             user={user}
             categories={categories}
-            restoreFromTrash={() => alert("Chức năng đang bảo trì")}
+            restoreFromTrash={(id: string) => restoreFromTrash(String(id))}
             restoreCustomerFromTrash={() => alert("Chức năng đang bảo trì")}
-            permanentlyDelete={async (id: string) => {}}
+            permanentlyDelete={async (id: string) => permanentlyDelete(String(id))}
             permanentlyDeleteCustomer={async (id: string) => {}}
-            permanentlyDeleteAll={async () => {}}
+            permanentlyDeleteAll={async () => permanentlyDeleteAll()}
             permanentlyDeleteAllCustomers={async () => {}}
           />
         )}

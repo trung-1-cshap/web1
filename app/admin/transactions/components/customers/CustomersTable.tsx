@@ -32,7 +32,7 @@ export default function CustomersTable({
           <tr>
             <th className="px-4 py-3">Tên khách hàng</th>
             <th className="px-4 py-3">SĐT</th>
-            <th className="px-4 py-3 text-right">Tiền cọc</th>
+            <th className="px-4 py-3 text-right">Tiền Cọc</th>
             <th className="px-4 py-3 text-right">Tiền HĐ</th>
             <th className="px-4 py-3 text-center">Số tháng</th>
             <th className="px-4 py-3 text-right">Hoa hồng</th>

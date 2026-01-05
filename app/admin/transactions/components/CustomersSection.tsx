@@ -102,7 +102,7 @@ export default function CustomersSection({
   return (
     <div className="bg-white p-6 rounded-lg border shadow-sm mt-8">
       <h3 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
-        👥 Quản lý Khách hàng
+        Quản lý Khách hàng
       </h3>
 
       {/* Form thêm khách hàng */}
