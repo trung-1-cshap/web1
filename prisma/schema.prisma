@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,47 +7,35 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
-
-enum TransactionType {
-  INCOME
-  EXPENSE
-}
-
 model User {
-  id            String        @id @default(cuid())
-  email         String        @unique
-  password      String
-  name          String?
-  role          String        @default("ACCOUNTANT") // ADMIN, ACCOUNTANT
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-  transactions  Transaction[]
+  id           String        @id @default(cuid())
+  email        String        @unique
+  password     String
+  name         String?
+  role         String        @default("ACCOUNTANT")
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  transactions Transaction[]
 }
 
 model Category {
   id           Int             @id @default(autoincrement())
   name         String
   type         TransactionType
-  transactions Transaction[]
   createdAt    DateTime        @default(now())
+  transactions Transaction[]
 }
 
 model Account {
-  id               Int           @id @default(autoincrement())
-  name             String        @unique
-  initialBalance   Decimal       @default(0) @db.Decimal(15, 2)
-  currentBalance   Decimal       @default(0) @db.Decimal(15, 2)
-  
-  // Giao dịch thu/chi
-  transactions     Transaction[]
-  
-  // Chuyển khoản nội bộ
-  transfersFrom    Transfer[]    @relation("SourceAccount")
-  transfersTo      Transfer[]    @relation("DestinationAccount")
-  
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
+  id             Int           @id @default(autoincrement())
+  name           String        @unique
+  initialBalance Decimal       @default(0) @db.Decimal(15, 2)
+  currentBalance Decimal       @default(0) @db.Decimal(15, 2)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  transactions   Transaction[]
+  transfersFrom  Transfer[]    @relation("SourceAccount")
+  transfersTo    Transfer[]    @relation("DestinationAccount")
 }
 
 model Transaction {
@@ -59,26 +44,19 @@ model Transaction {
   type        TransactionType
   date        DateTime        @default(now())
   description String?
-  received    Boolean         @default(false)
-  // Soft-delete fields
-  deleted     Boolean         @default(false)
-  deletedAt   DateTime?
-  // Approval fields
   approved    Boolean         @default(false)
   approvedAt  DateTime?
   approvedBy  String?
-  
-  // Relations
   categoryId  Int
-  category    Category        @relation(fields: [categoryId], references: [id])
-  
   accountId   Int
-  account     Account         @relation(fields: [accountId], references: [id])
-  
   userId      String
-  user        User            @relation(fields: [userId], references: [id])
-
   createdAt   DateTime        @default(now())
+  received    Boolean         @default(false)
+  deleted     Boolean         @default(false)
+  deletedAt   DateTime?
+  account     Account         @relation(fields: [accountId], references: [id])
+  category    Category        @relation(fields: [categoryId], references: [id])
+  user        User            @relation(fields: [userId], references: [id])
 }
 
 model Transfer {
@@ -86,32 +64,31 @@ model Transfer {
   amount        Decimal  @db.Decimal(15, 2)
   date          DateTime @default(now())
   description   String?
-
   fromAccountId Int
-  fromAccount   Account  @relation("SourceAccount", fields: [fromAccountId], references: [id])
-
   toAccountId   Int
-  toAccount     Account  @relation("DestinationAccount", fields: [toAccountId], references: [id])
-
   createdAt     DateTime @default(now())
+  fromAccount   Account  @relation("SourceAccount", fields: [fromAccountId], references: [id])
+  toAccount     Account  @relation("DestinationAccount", fields: [toAccountId], references: [id])
 }
 
 model Customer {
-  id                     Int      @id @default(autoincrement())
+  id                     Int       @id @default(autoincrement())
   name                   String
   phone                  String?
   depositDate            DateTime?
   contractDate           DateTime?
-  contractValidityMonths Int?      // ✅ THÊM DÒNG NÀY
   depositAmount          Decimal?  @db.Decimal(15, 2)
   contractAmount         Decimal?  @db.Decimal(15, 2)
   commission             Int?
   received               Boolean   @default(false)
   performedBy            String?
-  // Soft-delete fields
+  createdAt              DateTime  @default(now())
+  contractValidityMonths Int?
   deleted                Boolean   @default(false)
   deletedAt              DateTime?
-  createdAt              DateTime  @default(now())
 }
 
-
+enum TransactionType {
+  INCOME
+  EXPENSE
+}

@@ -67,6 +67,25 @@ export default function TransactionsSection({
 
     const isManager = !!(user && String(user.role).toLowerCase() === "manager");
 
+
+    async function handleExportXlsx() {
+      const rows = items.map((t) => ({
+        ID: t.id,
+        Date: t.date ? new Date(t.date).toLocaleString() : "",
+        Amount: Number(t.amount ?? 0),
+        Type: t.type,
+        Description: t.description || "",
+        Category: t.categoryName || "",
+        Account: t.accountName || "",
+        PerformedBy: t.performedBy || (t.user?.name ?? "")
+      }));
+      const XLSX = await import('xlsx');
+      const ws = XLSX.utils.json_to_sheet(rows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Transactions');
+      XLSX.writeFile(wb, 'transactions.xlsx');
+    }
+
     return (
         <div className="space-y-6">
             {/* Form Thêm Giao Dịch */}
@@ -114,6 +133,10 @@ export default function TransactionsSection({
                 Bạn không có quyền tạo giao dịch.
               </div>
             )}
+
+            <div className="flex items-center justify-end gap-2">
+              <button onClick={handleExportXlsx} title="Xuất tất cả giao dịch ra file Excel" aria-label="Xuất Excel giao dịch" className="bg-emerald-600 text-white px-3 py-1 rounded text-sm hover:bg-emerald-500">Xuất Excel</button>
+            </div>
 
             {/* Bảng Danh Sách */}
             <TransactionsTable 

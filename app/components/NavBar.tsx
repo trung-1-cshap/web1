@@ -63,7 +63,7 @@ export default function NavBar() {
               <button onClick={logout} className="px-3 py-1 rounded-md bg-red-600 text-white text-sm">Đăng xuất</button>
             </>
           ) : (
-            <Link href="/login" className="px-4 py-2 rounded-md font-bold text-black bg-gradient-to-r from-amber-400 to-amber-800">Đăng Nhập</Link>
+            <Link href="/login" className="px-4 py-2 rounded-md font-bold text-black bg-linear-to-r from-amber-400 to-amber-800">Đăng Nhập</Link>
           )}
         </div>
       </div>

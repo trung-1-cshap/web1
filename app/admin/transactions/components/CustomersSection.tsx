@@ -105,6 +105,26 @@ export default function CustomersSection({
         Quản lý Khách hàng
       </h3>
 
+      <div className="flex items-center justify-end mb-4">
+        <button onClick={async () => {
+          const rows = customers.map(c => ({
+            ID: c.id,
+            Name: c.name,
+            Phone: c.phone || "",
+            Email: c.email || "",
+            DepositAmount: Number(c.depositAmount ?? 0),
+            ContractAmount: Number(c.contractAmount ?? 0),
+            Received: Boolean(c.received),
+            CreatedAt: c.createdAt || ""
+          }));
+          const XLSX = await import('xlsx');
+          const ws = XLSX.utils.json_to_sheet(rows);
+          const wb = XLSX.utils.book_new();
+          XLSX.utils.book_append_sheet(wb, ws, 'Customers');
+          XLSX.writeFile(wb, 'customers.xlsx');
+        }} title="Xuất tất cả khách hàng ra file Excel" aria-label="Xuất Excel khách hàng" className="bg-emerald-600 text-white px-3 py-1 rounded text-sm hover:bg-emerald-500 ml-2">Xuất Excel</button>
+      </div>
+
       {/* Form thêm khách hàng */}
       {String(user?.role ?? "").toLowerCase() !== "manager" ? (
         <form onSubmit={onAdd} className="bg-gray-50 p-4 rounded mb-6 border border-gray-200">

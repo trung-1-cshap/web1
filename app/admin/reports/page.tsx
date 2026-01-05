@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { getTransactions, getCustomers } from "../../../lib/mockService";
-import { exportToCsv } from "../../../lib/csv";
 import { useAuth } from '../../components/AuthProvider'
 
 export default function ReportsPage() {
@@ -36,9 +35,19 @@ export default function ReportsPage() {
     return acc;
   }, { depositReceived: 0, contractReceived: 0 });
 
-  function handleExport() {
-    const rows = transactions.map((t) => ({ id: t.id, date: t.date ? new Date(t.date).toLocaleString() : "", amount: Number(t.amount ?? 0), type: t.type, description: t.description }));
-    exportToCsv("transactions.csv", rows);
+  async function handleExport() {
+    const rows = transactions.map((t) => ({
+      ID: t.id,
+      Date: t.date ? new Date(t.date).toLocaleString() : "",
+      Amount: Number(t.amount ?? 0),
+      Type: t.type,
+      Description: t.description
+    }));
+    const XLSX = await import('xlsx');
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Transactions');
+    XLSX.writeFile(wb, 'transactions.xlsx');
   }
 
   // dữ liệu biểu đồ đơn giản (Thu vs Chi)
@@ -57,11 +66,11 @@ export default function ReportsPage() {
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-2xl font-semibold">Báo cáo Thu/Chi</h2>
         <div className="flex gap-2">
-          <button onClick={handleExport} className="bg-[#22c55e] hover:bg-[#16a34a] text-white px-4 py-2 rounded">Xuất CSV</button>
+          <button onClick={handleExport} title="Xuất tất cả giao dịch ra file Excel" aria-label="Xuất Excel giao dịch" className="bg-[#22c55e] hover:bg-[#16a34a] text-white px-4 py-2 rounded">Xuất Excel</button>
         </div>
       </div>
 
-          <div className="grid grid-cols-4 gap-4 mb-6">
+          <div className="grid grid-cols-5 gap-4 mb-6">
             <div className="border rounded p-4">
               <div className="text-sm text-gray-500">Tổng Thu</div>
               <div className="text-2xl font-bold">{totals.thu != null ? totals.thu.toLocaleString('vi-VN') : "0"}</div>
@@ -75,9 +84,23 @@ export default function ReportsPage() {
               <div className="text-2xl font-bold">{customerTotals.depositReceived != null ? customerTotals.depositReceived.toLocaleString('vi-VN') : "0"}</div>
             </div>
             <div className="border rounded p-4">
-              <div className="text-sm text-gray-500">Tiền hợp đồng đã thu</div>
+              <div className="text-sm text-gray-500">Tiền hợp đồng thu</div>
               <div className="text-2xl font-bold">{customerTotals.contractReceived != null ? customerTotals.contractReceived.toLocaleString('vi-VN') : "0"}</div>
             </div>
+              <div className="border rounded p-4">
+                <div className="text-sm text-gray-500">Tổng đơn khách</div>
+                <div className="text-2xl font-bold">
+                  {(() => {
+                    if (!customers || customers.length === 0) return "0";
+                    const set = new Set<string>();
+                    customers.forEach((c: any) => {
+                      const key = String((c.phone || c.email || c.name) ?? "").trim().toLowerCase();
+                      if (key) set.add(key);
+                    });
+                    return set.size.toLocaleString('vi-VN');
+                  })()}
+                </div>
+              </div>
           </div>
 
       <div className="mb-6">

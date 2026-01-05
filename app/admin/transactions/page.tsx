@@ -48,7 +48,7 @@ export default function TransactionsPage() {
   if (txLoading || custLoading) return <div className="p-6">Đang tải dữ liệu...</div>;
 
   return (
-    <div className="p-4 md:p-6 max-w-[1400px] mx-auto">
+    <div className="p-4 md:p-6 max-w-350 mx-auto">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <h1 className="text-2xl font-bold text-slate-800">QUẢN LÝ GIAO DỊCH</h1>
         <div className="text-sm text-gray-500">
