@@ -9,9 +9,11 @@ export async function GET(req: Request) {
     const prisma = getPrisma();
     const url = new URL(req.url);
     const deletedParam = url.searchParams.get("deleted");
+    console.debug('[api/transactions] GET', { url: req.url, deletedParam });
     const whereClause: any = {};
     if (deletedParam === "true") whereClause.deleted = true;
     else whereClause.deleted = false;
+    console.debug('[api/transactions] whereClause', whereClause);
 
     const txs = await prisma.transaction.findMany({
       where: whereClause,
@@ -27,7 +29,7 @@ export async function GET(req: Request) {
   } catch (err) {
     console.error("GET /api/transactions error:", err);
     return NextResponse.json(
-      { error: "Lỗi máy chủ nội bộ" },
+      { error: "Lỗi máy chủ nội bộ", details: String(err) },
       { status: 500 }
     );
   }
@@ -38,6 +40,7 @@ export async function POST(req: Request) {
   try {
     const prisma = getPrisma();
     const body = await req.json();
+    console.debug('[api/transactions] POST body', body);
 
     const {
       amount: rawAmount,
@@ -117,6 +120,7 @@ export async function PUT(req: Request) {
   try {
     const prisma = getPrisma();
     const body = await req.json();
+    console.debug('[api/transactions] PUT body', body);
     const { id, ...data } = body;
 
     if (!id) {
@@ -198,6 +202,7 @@ export async function DELETE(req: Request) {
   try {
     const prisma = getPrisma();
     const body = await req.json();
+    console.debug('[api/transactions] DELETE body', body);
     const { id, permanent } = body;
 
     if (!id) {
