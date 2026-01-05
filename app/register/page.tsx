@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../components/AuthProvider';
 
@@ -14,6 +14,7 @@ export default function RegisterPage() {
   const [err, setErr] = useState<string | null>(null);
   const auth = useAuth();
   const router = useRouter();
+  const [allowed, setAllowed] = useState<boolean | null>(null);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -29,6 +30,33 @@ export default function RegisterPage() {
       setErr(e?.message || 'Đăng ký thất bại');
     }
   }
+
+  // If registration is restricted, check whether allowed: allowed if no users yet or current user is ADMIN
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch('/api/users');
+        if (!res.ok) { setAllowed(false); return; }
+        const users = await res.json();
+        if (!users || users.length === 0) { setAllowed(true); return; }
+        setAllowed(auth.user?.role === 'ADMIN');
+      } catch (err) {
+        setAllowed(false);
+      }
+    })();
+  }, [auth.user]);
+
+  if (allowed === false) {
+    return (
+      <div className="max-w-md mx-auto p-6">
+        <h2 className="text-xl font-semibold mb-4">Đăng ký tài khoản</h2>
+        <div className="text-red-600 mb-4">Chỉ admin mới có quyền tạo tài khoản mới.</div>
+        <button className="bg-slate-200 px-4 py-2 rounded" onClick={() => router.push('/login')}>Quay lại đăng nhập</button>
+      </div>
+    );
+  }
+
+  if (allowed === null) return <div className="p-6">Đang kiểm tra quyền...</div>;
 
   return (
     <div className="max-w-md mx-auto p-6">

@@ -48,10 +48,12 @@ export async function registerMock(
   password: string,
   name?: string
 ): Promise<User> {
+  // Attach current logged-in user as requester when available
+  const requester = getStoredUser()?.email ?? null;
   const res = await fetch("/api/users", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password, name }),
+    body: JSON.stringify({ email, password, name, requesterEmail: requester }),
   })
 
   if (!res.ok) {
