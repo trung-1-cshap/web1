@@ -31,6 +31,21 @@ export async function POST(req: Request) {
     const prisma = getPrisma();
     const body = await req.json();
 
+    const requesterEmail = String(body?.email ?? "").trim();
+    if (!requesterEmail) {
+      return NextResponse.json({ error: "Missing requester email" }, { status: 401 });
+    }
+
+    const requester = await prisma.user.findUnique({ where: { email: requesterEmail } });
+    if (!requester) {
+      return NextResponse.json({ error: "Requester not found" }, { status: 403 });
+    }
+
+    const requesterRole = String(requester.role ?? "").toUpperCase();
+    if (requesterRole === "MANAGER") {
+      return NextResponse.json({ error: "Không có quyền tạo khách hàng" }, { status: 403 });
+    }
+
     if (!body.name) {
       return NextResponse.json(
         { error: "Thiếu tên khách hàng" },

@@ -56,10 +56,11 @@ export function updateCategory(id: string | number, payload: Partial<Category>):
 
 export function deleteCategory(id: string | number): Promise<boolean> {
   if (typeof window !== 'undefined') {
+    const email = getCurrentUserEmail();
     return fetch('/api/categories', {
       method: 'DELETE',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ id })
+      body: JSON.stringify({ id, requesterEmail: email })
     }).then((r) => r.json()).then((r) => Boolean(r.ok));
   }
   return Promise.resolve(false);
@@ -122,10 +123,11 @@ export function addTransaction(payload: Omit<Transaction, "id">): Promise<Transa
 
 export function updateTransaction(id: string | number, payload: Partial<Transaction>): Promise<Transaction | null> {
   if (typeof window !== 'undefined') {
+    const email = getCurrentUserEmail();
     return fetch('/api/transactions', {
       method: 'PUT',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ id, ...payload })
+      body: JSON.stringify({ id, ...payload, requesterEmail: email })
     }).then(async (r) => {
       // Parse JSON if possible, but handle non-JSON responses safely
       let json: any = null;
@@ -153,10 +155,11 @@ export function updateTransaction(id: string | number, payload: Partial<Transact
 
 export function deleteTransaction(id: string | number, permanent: boolean = false): Promise<boolean> {
   if (typeof window !== 'undefined') {
+    const email = getCurrentUserEmail();
     return fetch('/api/transactions', {
       method: 'DELETE',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ id, permanent })
+      body: JSON.stringify({ id, permanent, requesterEmail: email })
     }).then((r) => r.ok);
   }
   return Promise.resolve(false);

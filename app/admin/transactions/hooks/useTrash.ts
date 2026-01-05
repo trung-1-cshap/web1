@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { type Transaction, addTransaction, deleteTransaction } from "../../../../lib/mockService";
+import { canSoftDelete } from "../../../../lib/permissions";
 
 export default function useTrash(items: Transaction[], setItems: (v: Transaction[] | ((s: Transaction[]) => Transaction[])) => void, user?: any, setFlashMsg?: (s: string | null) => void) {
   const [trash, setTrash] = useState<Transaction[]>(() => {
@@ -16,7 +17,7 @@ export default function useTrash(items: Transaction[], setItems: (v: Transaction
   }, [trash]);
 
   async function handleDelete(id: string) {
-    if (!user || user.role !== 'admin') { alert('Chỉ admin mới có quyền xóa'); return; }
+    if (!canSoftDelete(user)) { alert('Không có quyền xóa'); return; }
     const it = items.find((t) => String(t.id) === String(id));
     if (!it) return;
     setItems((s) => s.filter((t) => String(t.id) !== String(id)));
@@ -52,13 +53,13 @@ export default function useTrash(items: Transaction[], setItems: (v: Transaction
   }
 
   async function permanentlyDelete(id: string) {
-    if (!user || user.role !== 'admin') { alert('Chỉ admin mới có quyền xóa'); return; }
+    if (!canSoftDelete(user)) { alert('Không có quyền xóa'); return; }
     try { await deleteTransaction(id); } catch (err) { console.warn('permanentlyDelete: server delete failed', err); }
     setTrash((s) => s.filter((t) => String(t.id) !== String(id)));
   }
 
   async function permanentlyDeleteAll() {
-    if (!user || user.role !== 'admin') { alert('Chỉ admin mới có quyền xóa'); return; }
+    if (!canSoftDelete(user)) { alert('Không có quyền xóa'); return; }
     if (!trash || trash.length === 0) return;
     try {
       await Promise.allSettled(trash.map((t) => deleteTransaction(String(t.id))));

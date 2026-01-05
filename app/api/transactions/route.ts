@@ -87,6 +87,12 @@ export async function POST(req: Request) {
       );
     }
 
+    // Authorization: không cho phép role MANAGER tạo giao dịch
+    const role = String(user.role ?? "").toUpperCase();
+    if (role === "MANAGER") {
+      return NextResponse.json({ error: "Không có quyền tạo giao dịch" }, { status: 403 });
+    }
+
     // 5. Tạo giao dịch
     const created = await prisma.transaction.create({
       data: {
@@ -121,7 +127,7 @@ export async function PUT(req: Request) {
     const prisma = getPrisma();
     const body = await req.json();
     console.debug('[api/transactions] PUT body', body);
-    const { id, ...data } = body;
+    const { id, requesterEmail, ...data } = body;
 
     if (!id) {
       return NextResponse.json({ error: "Thiếu id" }, { status: 400 });
@@ -166,6 +172,20 @@ export async function PUT(req: Request) {
 
     // Soft-delete / restore support
     if (data.deleted !== undefined) {
+      // Authorization: only allow soft-delete/restore for non-'user' roles
+      const email = String(requesterEmail ?? '').trim();
+      if (!email) {
+        return NextResponse.json({ error: 'Missing requesterEmail' }, { status: 401 });
+      }
+      const requester = await prisma.user.findUnique({ where: { email } });
+      if (!requester) {
+        return NextResponse.json({ error: 'Requester not found' }, { status: 403 });
+      }
+      const role = String(requester.role ?? '').toUpperCase();
+      if (role === 'USER') {
+        return NextResponse.json({ error: 'Không có quyền xóa' }, { status: 403 });
+      }
+
       updateData.deleted = Boolean(data.deleted);
       updateData.deletedAt = data.deleted ? new Date() : null;
     }
@@ -203,10 +223,24 @@ export async function DELETE(req: Request) {
     const prisma = getPrisma();
     const body = await req.json();
     console.debug('[api/transactions] DELETE body', body);
-    const { id, permanent } = body;
+    const { id, permanent, requesterEmail } = body;
 
     if (!id) {
       return NextResponse.json({ error: "Thiếu id" }, { status: 400 });
+    }
+
+    // Authorization: only allow deletes for non-'user' roles
+    const email = String(requesterEmail ?? '').trim();
+    if (!email) {
+      return NextResponse.json({ error: 'Missing requesterEmail' }, { status: 401 });
+    }
+    const requester = await prisma.user.findUnique({ where: { email } });
+    if (!requester) {
+      return NextResponse.json({ error: 'Requester not found' }, { status: 403 });
+    }
+    const role = String(requester.role ?? '').toUpperCase();
+    if (role === 'USER') {
+      return NextResponse.json({ error: 'Không có quyền xóa' }, { status: 403 });
     }
 
     if (permanent) {

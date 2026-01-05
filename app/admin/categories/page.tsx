@@ -7,12 +7,15 @@ import {
   deleteCategory, 
   type Category 
 } from "../../../lib/mockService";
+import { useAuth } from "../../components/AuthProvider";
 
 export default function AdminCategoriesPage() {
   const [items, setItems] = useState<Category[]>([]);
   const [name, setName] = useState("");
   const [type, setType] = useState<"thu" | "chi">("thu");
   const [loading, setLoading] = useState(true);
+  const { user: currentUser } = useAuth();
+  const currentRole = String(currentUser?.role ?? "").toLowerCase();
 
   useEffect(() => {
     loadData();
@@ -41,8 +44,14 @@ export default function AdminCategoriesPage() {
 
   // ✅ SỬA LỖI Ở ĐÂY: Cho phép id là string HOẶC number
   async function handleDelete(id: string | number) {
+    const role = String(currentUser?.role ?? "").toLowerCase();
+    if (role === 'user') {
+      alert('Bạn không có quyền xóa danh mục.');
+      return;
+    }
+
     if (!confirm("Bạn có chắc muốn xóa danh mục này?")) return;
-    
+
     await deleteCategory(id);
     // Reload lại dữ liệu sau khi xóa
     await loadData();
@@ -84,12 +93,14 @@ export default function AdminCategoriesPage() {
             {items.filter(i => i.type === 'thu' || i.type === 'INCOME').map((it) => (
               <div key={it.id} className="flex justify-between items-center bg-white p-3 rounded border shadow-sm">
                 <span>{it.name}</span>
-                <button 
-                  className="text-red-500 hover:text-red-700 text-sm px-2 py-1 rounded hover:bg-red-50"
-                  onClick={() => handleDelete(it.id)}
-                >
-                  Xóa
-                </button>
+                {currentRole !== 'user' && (
+                  <button 
+                    className="text-red-500 hover:text-red-700 text-sm px-2 py-1 rounded hover:bg-red-50"
+                    onClick={() => handleDelete(it.id)}
+                  >
+                    Xóa
+                  </button>
+                )}
               </div>
             ))}
             {items.filter(i => i.type === 'thu' || i.type === 'INCOME').length === 0 && (
@@ -105,12 +116,14 @@ export default function AdminCategoriesPage() {
             {items.filter(i => i.type === 'chi' || i.type === 'EXPENSE').map((it) => (
               <div key={it.id} className="flex justify-between items-center bg-white p-3 rounded border shadow-sm">
                 <span>{it.name}</span>
-                <button 
-                  className="text-red-500 hover:text-red-700 text-sm px-2 py-1 rounded hover:bg-red-50"
-                  onClick={() => handleDelete(it.id)}
-                >
-                  Xóa
-                </button>
+                {currentRole !== 'user' && (
+                  <button 
+                    className="text-red-500 hover:text-red-700 text-sm px-2 py-1 rounded hover:bg-red-50"
+                    onClick={() => handleDelete(it.id)}
+                  >
+                    Xóa
+                  </button>
+                )}
               </div>
             ))}
              {items.filter(i => i.type === 'chi' || i.type === 'EXPENSE').length === 0 && (

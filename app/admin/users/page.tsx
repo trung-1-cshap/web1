@@ -23,7 +23,9 @@ export default function AdminUsersPage() {
     async function load() {
       setLoading(true);
       const all = await listUsers();
-      setUsers(all);
+      // normalize role casing for UI (select options expect lowercase)
+      const normalized = Array.isArray(all) ? all.map((x: any) => ({ ...x, role: String(x.role ?? 'user').toLowerCase() })) : [];
+      setUsers(normalized);
       setLoading(false);
     }
     load();
@@ -79,7 +81,8 @@ export default function AdminUsersPage() {
     admin: 'admin',
     [specialRole]: 'Quản lý người dùng',
   };
-  const availableRoles = user?.role === 'admin' ? [...rolesBase, specialRole] : rolesBase;
+  const isAdmin = String(user?.role ?? '').toLowerCase() === 'admin';
+  const availableRoles = isAdmin ? [...rolesBase, specialRole] : rolesBase;
 
   if (!user) return null;
 

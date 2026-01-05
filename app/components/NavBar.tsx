@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "./AuthProvider";
+import { canExport } from "@/lib/permissions";
 
 export default function NavBar() {
   const pathname = usePathname() || "/";
@@ -17,13 +18,17 @@ export default function NavBar() {
   // Chỉ cần thay thế đoạn check hydrated cũ bằng đoạn check isLoading trên là được.
   
   // Code menu cũ của bạn (viết gọn lại để bạn dễ copy):
-  const navItems = [
+  const navItems: { label: string; href: string }[] = [
     { label: "Trang Chủ", href: "/" },
     { label: "Danh mục", href: "/admin/categories" },
     { label: "Giao dịch", href: "/admin/transactions" },
     { label: "Tài khoản", href: "/admin/accounts" },
-    { label: "Báo cáo", href: "/admin/reports" },
   ];
+
+  // Hiển thị mục Báo cáo chỉ khi user có quyền export (admin/accountant)
+  if (canExport(user)) {
+    navItems.push({ label: "Báo cáo", href: "/admin/reports" });
+  }
   function isActive(href: string) {
     if (href === "/") return pathname === "/";
     return pathname.startsWith(href);

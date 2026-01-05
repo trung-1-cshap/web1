@@ -55,3 +55,32 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Lỗi máy chủ nội bộ" }, { status: 500 });
   }
 }
+
+/* ================= DELETE ================= */
+export async function DELETE(req: Request) {
+  try {
+    const prisma = getPrisma();
+    const url = new URL(req.url);
+    const email = url.searchParams.get('email');
+
+    if (!email) {
+      return NextResponse.json({ error: 'Thiếu email' }, { status: 400 });
+    }
+
+    const target = await prisma.user.findUnique({ where: { email: String(email) } });
+    if (!target) {
+      return NextResponse.json({ error: 'Không tìm thấy người dùng' }, { status: 404 });
+    }
+
+    // Do not allow deleting ADMIN accounts via this endpoint
+    if (String(target.role).toUpperCase() === 'ADMIN') {
+      return NextResponse.json({ error: 'Không được xóa tài khoản ADMIN' }, { status: 403 });
+    }
+
+    await prisma.user.delete({ where: { email: String(email) } });
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    console.error('DELETE /api/users error:', err);
+    return NextResponse.json({ error: 'Lỗi máy chủ nội bộ' }, { status: 500 });
+  }
+}

@@ -1,9 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-// ✅ Đã sửa: dùng getStoredUser thay vì getCurrentUser
-import { getStoredUser } from "../../../lib/auth";
-
+import { useAuth } from "../../components/AuthProvider";
 import useTransactions from "./hooks/useTransactions";
 import useCustomers from "./hooks/useCustomers";
 
@@ -14,12 +12,7 @@ import TrashSection from "./components/TrashSection";
 
 export default function TransactionsPage() {
   const [activeTab, setActiveTab] = useState<"transactions" | "customers" | "received" | "trash">("transactions");
-  const [user, setUser] = useState<any>(null);
-
-  useEffect(() => {
-    // ✅ Gọi hàm đúng tên
-    setUser(getStoredUser());
-  }, []);
+  const { user } = useAuth();
 
   const {
     transactions,

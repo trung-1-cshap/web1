@@ -58,7 +58,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         ensureClientSeedAdmin();
         const u = getStoredUser();
         if (u) {
-          setUser(u);
+          setUser({ ...u, role: String(u.role ?? "").toLowerCase() });
         }
       } catch (error) {
         console.error("Auth init error:", error);
@@ -71,7 +71,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   async function login(email: string, password: string) {
     const u = await loginMock(email, password);
-    setUser(u);
+    setUser({ ...u, role: String(u.role ?? "").toLowerCase() });
     router.refresh(); 
   }
 

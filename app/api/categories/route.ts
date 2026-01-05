@@ -54,10 +54,23 @@ export async function POST(req: Request) {
 export async function DELETE(req: Request) {
   try {
     const prisma = getPrisma();
-    const { id } = await req.json();
+    const { id, requesterEmail } = await req.json();
 
     if (!id) {
       return NextResponse.json({ error: "Missing id" }, { status: 400 });
+    }
+
+    const email = String(requesterEmail ?? '').trim();
+    if (!email) {
+      return NextResponse.json({ error: 'Missing requesterEmail' }, { status: 401 });
+    }
+    const requester = await prisma.user.findUnique({ where: { email } });
+    if (!requester) {
+      return NextResponse.json({ error: 'Requester not found' }, { status: 403 });
+    }
+    const role = String(requester.role ?? '').toUpperCase();
+    if (role === 'USER') {
+      return NextResponse.json({ error: 'Không có quyền xóa' }, { status: 403 });
     }
 
     await prisma.category.delete({ where: { id: Number(id) } });

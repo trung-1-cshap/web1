@@ -19,9 +19,11 @@ export default function ProfilePage() {
   const [showNew, setShowNew] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
 
+  const isAdmin = String(user?.role ?? '').toUpperCase() === 'ADMIN';
+
   useEffect(() => {
     async function load() {
-      if (user?.role === 'admin') {
+      if (isAdmin) {
         try {
           const all = await listUsers();
           setUsersList(all);
@@ -29,7 +31,7 @@ export default function ProfilePage() {
       }
     }
     load();
-  }, [user, listUsers]);
+  }, [isAdmin, listUsers]);
 
   if (!user) return <div className="p-6">Bạn cần đăng nhập để xem trang này.</div>;
 
@@ -87,7 +89,7 @@ export default function ProfilePage() {
 
       {msg && <div className="mt-4 text-sm">{msg}</div>}
 
-      {user.role === 'admin' && (
+      {isAdmin && (
         <div className="mt-8">
           <h3 className="text-lg font-semibold mb-3">Quản lý người dùng (Admin)</h3>
           <div className="flex gap-2 mb-4">

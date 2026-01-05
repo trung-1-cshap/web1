@@ -8,17 +8,23 @@ function roleName(user?: UserLike) {
 
 export function canSoftDelete(user?: UserLike): boolean {
   const r = roleName(user);
-  return r === 'admin' || r === 'administrator';
+  return (
+    r === 'admin' || r === 'administrator' || r === 'manager'
+  );
 }
 
 export function canExport(user?: UserLike): boolean {
   const r = roleName(user);
-  // allow admins and accountants to export
-  return r === 'admin' || r === 'administrator' || r === 'accountant' || r === 'account';
+  // allow admins, managers and accountants to export
+  return (
+    r === 'admin' || r === 'administrator' || r === 'manager' || r === 'accountant' || r === 'account'
+  );
 }
 
 export function canApproveTransaction(user?: UserLike): boolean {
   const r = roleName(user);
-  // approving transactions allowed for admin and accountant roles
-  return r === 'admin' || r === 'administrator' || r === 'accountant';
+  // approving transactions allowed for admin, manager and accountant roles
+  return (
+    r === 'admin' || r === 'administrator' || r === 'manager' || r === 'accountant'
+  );
 }

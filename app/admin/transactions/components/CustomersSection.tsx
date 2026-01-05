@@ -106,57 +106,61 @@ export default function CustomersSection({
       </h3>
 
       {/* Form thêm khách hàng */}
-      <form onSubmit={onAdd} className="bg-gray-50 p-4 rounded mb-6 border border-gray-200">
-        <h4 className="font-medium mb-3 text-gray-700">Thêm khách hàng mới</h4>
-        <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
-          <input
-            className="border p-2 rounded"
-            placeholder="Tên khách hàng (*)"
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-            required
-          />
-          <input
-            className="border p-2 rounded"
-            placeholder="Số điện thoại"
-            value={newPhone}
-            onChange={(e) => setNewPhone(e.target.value)}
-          />
-          <input
-            type="number"
-            className="border p-2 rounded"
-            placeholder="Tiền cọc"
-            value={newDeposit}
-            onChange={(e) => setNewDeposit(e.target.value ? Number(e.target.value) : "")}
-          />
-          <input
-            type="number"
-            className="border p-2 rounded"
-            placeholder="Tiền Hợp đồng"
-            value={newContract}
-            onChange={(e) => setNewContract(e.target.value ? Number(e.target.value) : "")}
-          />
-          <input
-            type="number"
-            className="border p-2 rounded"
-            placeholder="Số tháng hợp đồng"
-            value={newContractMonths}
-            onChange={(e) => setNewContractMonths(e.target.value ? Number(e.target.value) : "")}
-          />
-          <div className="flex gap-2">
+      {String(user?.role ?? "").toLowerCase() !== "manager" ? (
+        <form onSubmit={onAdd} className="bg-gray-50 p-4 rounded mb-6 border border-gray-200">
+          <h4 className="font-medium mb-3 text-gray-700">Thêm khách hàng mới</h4>
+          <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
+            <input
+              className="border p-2 rounded"
+              placeholder="Tên khách hàng (*)"
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              required
+            />
+            <input
+              className="border p-2 rounded"
+              placeholder="Số điện thoại"
+              value={newPhone}
+              onChange={(e) => setNewPhone(e.target.value)}
+            />
             <input
               type="number"
-              className="border p-2 rounded w-24"
-              placeholder="% HH"
-              value={newCommission}
-              onChange={(e) => setNewCommission(e.target.value ? Number(e.target.value) : "")}
+              className="border p-2 rounded"
+              placeholder="Tiền cọc"
+              value={newDeposit}
+              onChange={(e) => setNewDeposit(e.target.value ? Number(e.target.value) : "")}
             />
-            <button className="bg-slate-800 text-white px-4 py-2 rounded hover:bg-slate-700 flex-1">
-              Thêm
-            </button>
+            <input
+              type="number"
+              className="border p-2 rounded"
+              placeholder="Tiền Hợp đồng"
+              value={newContract}
+              onChange={(e) => setNewContract(e.target.value ? Number(e.target.value) : "")}
+            />
+            <input
+              type="number"
+              className="border p-2 rounded"
+              placeholder="Số tháng hợp đồng"
+              value={newContractMonths}
+              onChange={(e) => setNewContractMonths(e.target.value ? Number(e.target.value) : "")}
+            />
+            <div className="flex gap-2">
+              <input
+                type="number"
+                className="border p-2 rounded w-24"
+                placeholder="% HH"
+                value={newCommission}
+                onChange={(e) => setNewCommission(e.target.value ? Number(e.target.value) : "")}
+              />
+              <button className="bg-slate-800 text-white px-4 py-2 rounded hover:bg-slate-700 flex-1">
+                Thêm
+              </button>
+            </div>
           </div>
-        </div>
-      </form>
+        </form>
+      ) : (
+        <div className="bg-gray-50 p-4 rounded mb-6 border border-gray-200 text-sm text-gray-600">Bạn không có quyền tạo khách hàng.</div>
+      )}
 
       {/* Modal Sửa Khách Hàng */}
       {isEditing && (

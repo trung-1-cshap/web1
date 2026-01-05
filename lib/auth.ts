@@ -107,12 +107,16 @@ export async function changePassword(email: string, oldPassword: string, newPass
 
 export async function setUserRole(email: string, role: string) {
   // Cần tạo API set role
+  const requester = getStoredUser()?.email ?? null;
   const res = await fetch("/api/users/role", {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, role }),
+    body: JSON.stringify({ email, role, requesterEmail: requester }),
   })
-  if (!res.ok) throw new Error("Không thể thay đổi quyền")
+  if (!res.ok) {
+    const err = await res.json().catch(() => null)
+    throw new Error(err?.error || "Không thể thay đổi quyền")
+  }
 }
 
 export async function deleteUser(email: string) {
@@ -121,7 +125,10 @@ export async function deleteUser(email: string) {
     method: "DELETE",
   })
   
-  if (!res.ok) throw new Error("Không thể xóa người dùng")
+  if (!res.ok) {
+    const err = await res.json().catch(() => null)
+    throw new Error(err?.error || "Không thể xóa người dùng")
+  }
 
   const current = getStoredUser()
   if (current?.email === email) {
