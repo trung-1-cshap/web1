@@ -69,7 +69,7 @@ export default function TransactionsSection({
         <div className="space-y-6">
             {/* Form Thêm Giao Dịch */}
             <div className="bg-white p-4 rounded border shadow-sm mt-6">
-                <h3 className="font-bold mb-4 text-gray-700">➕ Thêm giao dịch mới</h3>
+                <h3 className="font-bold mb-4 text-gray-700"> Thêm giao dịch mới</h3>
                 <form onSubmit={onAdd} className="grid grid-cols-1 md:grid-cols-6 gap-3">
                      <div className="md:col-span-1">
                         <label className="block text-xs text-gray-500 mb-1">Thời gian</label>
