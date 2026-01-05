@@ -227,6 +227,9 @@ export type Customer = {
   commission?: number;
   received?: boolean;
   approved?: boolean;
+  // Soft-delete fields
+  deleted?: boolean;
+  deletedAt?: string | null;
   
   // ✅ ĐÃ BỔ SUNG 2 DÒNG NÀY ĐỂ FIX LỖI:
   approvedBy?: string | null;
@@ -237,9 +240,10 @@ export type Customer = {
   createdAt?: string;
 };
 
-export function getCustomers(): Promise<Customer[]> {
+export function getCustomers(includeDeleted: boolean = false): Promise<Customer[]> {
   if (typeof window !== 'undefined') {
-    return fetch('/api/customers').then((r) => {
+    const url = '/api/customers' + (includeDeleted ? '?deleted=true' : '');
+    return fetch(url).then((r) => {
         if (!r.ok) return [];
         return r.json();
     });
@@ -269,12 +273,12 @@ export function updateCustomer(id: string | number, payload: Partial<Customer>):
   return Promise.resolve(null);
 }
 
-export function deleteCustomer(id: string | number): Promise<boolean> {
+export function deleteCustomer(id: string | number, permanent: boolean = false): Promise<boolean> {
   if (typeof window !== 'undefined') {
     return fetch('/api/customers', {
       method: 'DELETE',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ id })
+      body: JSON.stringify({ id, permanent })
     }).then((r) => Boolean(r.ok));
   }
   return Promise.resolve(false);

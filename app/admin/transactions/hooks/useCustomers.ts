@@ -10,10 +10,12 @@ import {
 // 👇 THÊM CHỮ "default" VÀO ĐÂY
 export default function useCustomers(user: any) {
   const [customers, setCustomers] = useState<Customer[]>([]);
+  const [customersTrash, setCustomersTrash] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadData();
+    loadTrash();
   }, []);
 
   async function loadData() {
@@ -25,6 +27,15 @@ export default function useCustomers(user: any) {
       console.error(e);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function loadTrash() {
+    try {
+      const data = await getCustomers(true);
+      setCustomersTrash(data);
+    } catch (err) {
+      console.error('loadTrash failed', err);
     }
   }
 
@@ -56,10 +67,46 @@ export default function useCustomers(user: any) {
     try {
       const ok = await deleteCustomer(id);
       if (ok) {
+        // remove from active list and refresh trash list
         setCustomers((s) => s.filter((c) => String(c.id) !== String(id)));
+        await loadTrash();
       }
     } catch (error) {
       console.error("Delete customer failed", error);
+    }
+  }
+
+  async function restoreCustomerFromTrash(id: string) {
+    try {
+      const updated = await updateCustomer(id, { deleted: false });
+      if (updated) {
+        await loadData();
+        await loadTrash();
+      }
+    } catch (err) {
+      console.error('restoreCustomerFromTrash failed', err);
+    }
+  }
+
+  async function permanentlyDeleteCustomer(id: string) {
+    if (!confirm('Xác nhận xóa vĩnh viễn khách hàng này?')) return;
+    try {
+      const ok = await deleteCustomer(id, true);
+      if (ok) {
+        setCustomersTrash((s) => s.filter((c) => String(c.id) !== String(id)));
+      }
+    } catch (err) {
+      console.error('permanentlyDeleteCustomer failed', err);
+    }
+  }
+
+  async function permanentlyDeleteAllCustomers() {
+    if (!confirm('Xác nhận xóa vĩnh viễn tất cả khách hàng trong thùng rác?')) return;
+    try {
+      await Promise.allSettled(customersTrash.map((c) => deleteCustomer(String(c.id), true)));
+      setCustomersTrash([]);
+    } catch (err) {
+      console.error('permanentlyDeleteAllCustomers failed', err);
     }
   }
 
@@ -81,10 +128,12 @@ export default function useCustomers(user: any) {
   return {
     customers,
     loading,
+    customersTrash,
     handleAddCustomer,
     handleUpdateCustomer,
     handleDeleteCustomer,
     toggleCustomerReceived,
     handleApproveCustomer
+    ,restoreCustomerFromTrash,permanentlyDeleteCustomer,permanentlyDeleteAllCustomers
   };
 }

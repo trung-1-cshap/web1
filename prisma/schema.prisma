@@ -108,6 +108,9 @@ model Customer {
   commission             Int?
   received               Boolean   @default(false)
   performedBy            String?
+  // Soft-delete fields
+  deleted                Boolean   @default(false)
+  deletedAt              DateTime?
   createdAt              DateTime  @default(now())
 }
 

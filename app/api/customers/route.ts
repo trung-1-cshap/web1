@@ -4,10 +4,18 @@ import { getPrisma } from "@/lib/prisma";
 export const runtime = "nodejs";
 
 /* ================= GET ================= */
-export async function GET() {
+export async function GET(req: Request) {
   try {
     const prisma = getPrisma();
+    const url = new URL(req.url);
+    const deletedParam = url.searchParams.get("deleted");
+    console.debug('[api/customers] GET', { url: req.url, deletedParam });
+    const whereClause: any = {};
+    if (deletedParam === "true") whereClause.deleted = true;
+    else whereClause.deleted = false;
+
     const customers = await prisma.customer.findMany({
+      where: whereClause,
       orderBy: { createdAt: "desc" },
     });
     return NextResponse.json(customers);
@@ -162,6 +170,8 @@ export async function PUT(req: Request) {
               ? String(data.performedBy)
               : null
             : undefined,
+        // Handle soft-delete toggle if provided
+        ...(data.deleted !== undefined ? { deleted: Boolean(data.deleted), deletedAt: data.deleted ? new Date() : null } : {}),
       },
     });
 
@@ -179,17 +189,26 @@ export async function PUT(req: Request) {
 export async function DELETE(req: Request) {
   try {
     const prisma = getPrisma();
-    const { id } = await req.json();
+    const body = await req.json();
+    const id = body?.id;
+    const permanent = Boolean(body?.permanent);
 
     if (!id) {
       return NextResponse.json({ error: "Thiếu id" }, { status: 400 });
     }
 
-    await prisma.customer.delete({
+    if (permanent) {
+      await prisma.customer.delete({ where: { id: Number(id) } });
+      return NextResponse.json({ ok: true, deleted: true });
+    }
+
+    // Soft-delete: mark as deleted
+    await prisma.customer.update({
       where: { id: Number(id) },
+      data: { deleted: true, deletedAt: new Date() },
     });
 
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, deleted: false });
   } catch (err) {
     console.error("DELETE /api/customers error:", err);
     return NextResponse.json(

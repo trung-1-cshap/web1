@@ -48,6 +48,7 @@ export default function TransactionsPage() {
     handleDeleteCustomer,
     toggleCustomerReceived,
     handleApproveCustomer
+  ,customersTrash,restoreCustomerFromTrash,permanentlyDeleteCustomer,permanentlyDeleteAllCustomers
   } = useCustomers(user);
 
   if (!user) return <div className="p-6">Đang tải thông tin user...</div>;
@@ -119,15 +120,15 @@ export default function TransactionsPage() {
         {activeTab === "trash" && (
           <TrashSection
             trash={trash}
-            customersTrash={[]}
+            customersTrash={customersTrash}
             user={user}
             categories={categories}
             restoreFromTrash={(id: string) => restoreFromTrash(String(id))}
-            restoreCustomerFromTrash={() => alert("Chức năng đang bảo trì")}
+            restoreCustomerFromTrash={(id: string) => restoreCustomerFromTrash(String(id))}
             permanentlyDelete={async (id: string) => permanentlyDelete(String(id))}
-            permanentlyDeleteCustomer={async (id: string) => {}}
+            permanentlyDeleteCustomer={async (id: string) => permanentlyDeleteCustomer(String(id))}
             permanentlyDeleteAll={async () => permanentlyDeleteAll()}
-            permanentlyDeleteAllCustomers={async () => {}}
+            permanentlyDeleteAllCustomers={async () => permanentlyDeleteAllCustomers()}
           />
         )}
       </div>
