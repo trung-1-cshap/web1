@@ -34,11 +34,17 @@ export function getCategories(): Promise<Category[]> {
 
 export function addCategory(payload: Omit<Category, "id">): Promise<Category> {
   if (typeof window !== 'undefined') {
+    const email = getCurrentUserEmail();
+    const bodyToSend = { ...payload, email };
     return fetch('/api/categories', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(payload)
-    }).then((r) => r.json());
+      body: JSON.stringify(bodyToSend)
+    }).then(async (r) => {
+      const json = await r.json();
+      if (!r.ok) throw new Error(json.error || `Lỗi: ${r.status}`);
+      return json;
+    });
   }
   return Promise.resolve({} as Category);
 }
@@ -256,10 +262,12 @@ export function getCustomers(includeDeleted: boolean = false): Promise<Customer[
 
 export function addCustomer(payload: Omit<Customer, "id">): Promise<Customer> {
   if (typeof window !== 'undefined') {
+    const email = getCurrentUserEmail();
+    const bodyToSend = { ...payload, email };
     return fetch('/api/customers', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(bodyToSend)
     }).then((r) => r.json());
   }
   return Promise.resolve({} as Customer);
@@ -267,10 +275,11 @@ export function addCustomer(payload: Omit<Customer, "id">): Promise<Customer> {
 
 export function updateCustomer(id: string | number, payload: Partial<Customer>): Promise<Customer | null> {
   if (typeof window !== 'undefined') {
+    const email = getCurrentUserEmail();
     return fetch('/api/customers', {
       method: 'PUT',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ id, ...payload })
+      body: JSON.stringify({ id, ...payload, requesterEmail: email })
     }).then((r) => r.json());
   }
   return Promise.resolve(null);
@@ -278,10 +287,11 @@ export function updateCustomer(id: string | number, payload: Partial<Customer>):
 
 export function deleteCustomer(id: string | number, permanent: boolean = false): Promise<boolean> {
   if (typeof window !== 'undefined') {
+    const email = getCurrentUserEmail();
     return fetch('/api/customers', {
       method: 'DELETE',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ id, permanent })
+      body: JSON.stringify({ id, permanent, requesterEmail: email })
     }).then((r) => Boolean(r.ok));
   }
   return Promise.resolve(false);
