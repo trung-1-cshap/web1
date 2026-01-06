@@ -36,18 +36,84 @@ export default function ReportsPage() {
   }, { depositReceived: 0, contractReceived: 0 });
 
   async function handleExport() {
-    const rows = transactions.map((t) => ({
+    // Re-fetch current transactions and customers from API to ensure fresh data
+    const [txRes, custRes] = await Promise.all([
+      fetch('/api/transactions'),
+      fetch('/api/customers'),
+    ]);
+    const txData = txRes.ok ? await txRes.json() : [];
+    const custData = custRes.ok ? await custRes.json() : [];
+
+    const rows = (Array.isArray(txData) ? txData : []).map((t: any) => ({
       ID: t.id,
       Date: t.date ? new Date(t.date).toLocaleString() : "",
       Amount: Number(t.amount ?? 0),
       Type: t.type,
       Description: t.description
     }));
+
+    // Compute summary values (same logic as UI)
+    const totalsCalc = (Array.isArray(txData) ? txData : []).reduce(
+      (acc: any, t: any) => {
+        const amt = Number(t.amount ?? 0);
+        if (t.type === "thu" || t.type === 'INCOME') acc.thu += amt;
+        else acc.chi += amt;
+        return acc;
+      },
+      { thu: 0, chi: 0 }
+    );
+
+    const customerTotalsCalc = (Array.isArray(custData) ? custData : []).reduce((acc: any, c: any) => {
+      const deposit = Number(c.depositAmount ?? 0);
+      const contract = Number(c.contractAmount ?? 0);
+      if (c.received) {
+        acc.depositReceived += deposit;
+        acc.contractReceived += contract;
+      }
+      return acc;
+    }, { depositReceived: 0, contractReceived: 0 });
+
+    const uniqueCustomers = (() => {
+      const list = Array.isArray(custData) ? custData : [];
+      const set = new Set<string>();
+      list.forEach((c: any) => {
+        const key = String((c.phone || c.email || c.name) ?? "").trim().toLowerCase();
+        if (key) set.add(key);
+      });
+      return set.size;
+    })();
+
+    const summaryRows = [
+      { Metric: 'Tổng Thu', Value: totalsCalc.thu },
+      { Metric: 'Tổng Chi', Value: totalsCalc.chi },
+      { Metric: 'Tiền cọc đã thu', Value: customerTotalsCalc.depositReceived },
+      { Metric: 'Tiền hợp đồng thu', Value: customerTotalsCalc.contractReceived },
+      { Metric: 'Tổng đơn khách', Value: uniqueCustomers },
+    ];
+
     const XLSX = await import('xlsx');
-    const ws = XLSX.utils.json_to_sheet(rows);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Transactions');
-    XLSX.writeFile(wb, 'transactions.xlsx');
+
+    const wsSummary = XLSX.utils.json_to_sheet(summaryRows, { header: ['Metric', 'Value'] });
+    XLSX.utils.book_append_sheet(wb, wsSummary, 'Summary');
+
+    const wsTx = XLSX.utils.json_to_sheet(rows);
+    XLSX.utils.book_append_sheet(wb, wsTx, 'Transactions');
+
+    // Also add customers sheet (useful)
+    const custRows = (Array.isArray(custData) ? custData : []).map((c: any) => ({
+      ID: c.id,
+      Name: c.name,
+      Phone: c.phone,
+      Email: c.email ?? '',
+      DepositAmount: Number(c.depositAmount ?? 0),
+      ContractAmount: Number(c.contractAmount ?? 0),
+      Received: Boolean(c.received),
+    }));
+    const wsCust = XLSX.utils.json_to_sheet(custRows);
+    XLSX.utils.book_append_sheet(wb, wsCust, 'Customers');
+
+    XLSX.writeFile(wb, `report-${new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')}.xlsx`);
   }
 
   // dữ liệu biểu đồ đơn giản (Thu vs Chi)

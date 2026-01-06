@@ -3,6 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "./AuthProvider";
 import { canExport } from "@/lib/permissions";
+import { useState } from "react";
 
 export default function NavBar() {
   const pathname = usePathname() || "/";
@@ -43,15 +44,20 @@ export default function NavBar() {
           <span className="text-sm font-semibold text-black">Quản lý thu chi</span>
         </Link>
         {user && (
-          <nav className="hidden md:block flex-1">
-            <ul className="flex justify-center gap-6">
-              {navItems.map((it) => (
-                <li key={it.href}>
-                  <Link href={it.href} className={`px-4 py-2 rounded-md font-semibold transition ${isActive(it.href) ? "bg-white/30 text-black" : "text-black hover:text-[#48a0f7] hover:bg-white/10"}`}>{it.label}</Link>
-                </li>
-              ))}
-            </ul>
-          </nav>
+          <>
+            <nav className="hidden md:block flex-1">
+              <ul className="flex justify-center gap-6">
+                {navItems.map((it) => (
+                  <li key={it.href}>
+                    <Link href={it.href} className={`px-4 py-2 rounded-md font-semibold transition ${isActive(it.href) ? "bg-white/30 text-black" : "text-black hover:text-[#48a0f7] hover:bg-white/10"}`}>{it.label}</Link>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+
+            {/* Mobile hamburger */}
+            <MobileMenu navItems={navItems} user={user} isActive={isActive} logout={logout} />
+          </>
         )}
         <div className="flex items-center gap-4">
           {user ? (
@@ -68,5 +74,33 @@ export default function NavBar() {
         </div>
       </div>
     </header>
+  );
+}
+
+function MobileMenu({ navItems, user, isActive, logout }: any) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="md:hidden">
+      <button aria-label="Mở menu" aria-expanded={open} onClick={() => setOpen(!open)} className="p-2 rounded-md bg-white/80">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12h18M3 6h18M3 18h18"></path></svg>
+      </button>
+
+      {open && (
+        <div className="absolute right-4 top-16 z-20 w-56 bg-white rounded shadow-md">
+          <ul className="flex flex-col">
+            {navItems.map((it: any) => (
+              <li key={it.href} className="border-b last:border-b-0">
+                <Link href={it.href} className={`block px-4 py-3 ${isActive(it.href) ? "bg-gray-100" : "hover:bg-gray-50"}`}>{it.label}</Link>
+              </li>
+            ))}
+          </ul>
+          <div className="p-3 border-t flex items-center justify-between">
+            <Link href="/profile" className="text-sm">{user?.name}</Link>
+            <button onClick={logout} className="text-sm text-red-600">Đăng xuất</button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
