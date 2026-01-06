@@ -133,6 +133,20 @@ export async function PUT(req: Request) {
       return NextResponse.json({ error: "Thiếu id" }, { status: 400 });
     }
 
+    // Require requesterEmail and block 'USER' role from editing transactions
+    const emailCheck = String(requesterEmail ?? '').trim();
+    if (!emailCheck) {
+      return NextResponse.json({ error: 'Missing requesterEmail' }, { status: 401 });
+    }
+    const requesterUser = await prisma.user.findUnique({ where: { email: emailCheck } });
+    if (!requesterUser) {
+      return NextResponse.json({ error: 'Requester not found' }, { status: 403 });
+    }
+    const requesterRole = String(requesterUser.role ?? '').toUpperCase();
+    if (requesterRole === 'USER') {
+      return NextResponse.json({ error: 'Không có quyền chỉnh sửa giao dịch' }, { status: 403 });
+    }
+
     const updateData: any = {};
 
     if (data.amount !== undefined) {

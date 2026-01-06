@@ -28,3 +28,9 @@ export function canApproveTransaction(user?: UserLike): boolean {
     r === 'admin' || r === 'administrator' || r === 'manager' || r === 'accountant'
   );
 }
+
+export function canEditTransaction(user?: UserLike): boolean {
+  const r = roleName(user);
+  // Only disallow the basic 'user' role from editing transactions
+  return r !== 'user';
+}

@@ -76,8 +76,8 @@ export default function AdminCategoriesPage() {
           value={type} 
           onChange={(e) => setType(e.target.value as "thu" | "chi")}
         >
-          <option value="thu">Khoản Thu </option>
-          <option value="chi">Khoản Chi </option>
+          <option value="thu">Thu </option>
+          <option value="chi">Chi </option>
         </select>
         <button className="bg-slate-800 text-white px-4 py-2 rounded hover:bg-slate-700">
           Thêm
@@ -88,7 +88,7 @@ export default function AdminCategoriesPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Cột Thu */}
         <div>
-          <h3 className="font-semibold text-lg text-green-600 mb-3 border-b pb-2">Khoản Thu</h3>
+          <h3 className="font-semibold text-lg text-green-600 mb-3 border-b pb-2">Thu</h3>
           <div className="space-y-2">
             {items.filter(i => i.type === 'thu' || i.type === 'INCOME').map((it) => (
               <div key={it.id} className="flex justify-between items-center bg-white p-3 rounded border shadow-sm">
@@ -111,7 +111,7 @@ export default function AdminCategoriesPage() {
 
         {/* Cột Chi */}
         <div>
-          <h3 className="font-semibold text-lg text-red-600 mb-3 border-b pb-2">Khoản Chi</h3>
+          <h3 className="font-semibold text-lg text-red-600 mb-3 border-b pb-2">Chi</h3>
           <div className="space-y-2">
             {items.filter(i => i.type === 'chi' || i.type === 'EXPENSE').map((it) => (
               <div key={it.id} className="flex justify-between items-center bg-white p-3 rounded border shadow-sm">

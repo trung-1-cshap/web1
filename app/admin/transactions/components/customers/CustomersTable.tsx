@@ -3,7 +3,7 @@
 import React from "react";
 import type { Customer } from "../../../../../lib/mockService";
 import { formatVND } from "../../../../../lib/format";
-import { canSoftDelete, canApproveTransaction } from "../../../../../lib/permissions";
+import { canSoftDelete, canApproveTransaction, canEditTransaction } from "../../../../../lib/permissions";
 
 type Props = {
   customers: Customer[];
@@ -83,12 +83,14 @@ export default function CustomersTable({
               <td className="px-4 py-3 text-center">
                 <div className="flex flex-col gap-2 items-center">
                    {/* Nút Sửa */}
-                  <button 
-                    className="text-blue-600 hover:underline" 
-                    onClick={() => startEditCustomer(c)}
-                  >
-                    Sửa
-                  </button>
+                  {canEditTransaction(user) && (
+                    <button 
+                      className="text-blue-600 hover:underline" 
+                      onClick={() => startEditCustomer(c)}
+                    >
+                      Sửa
+                    </button>
+                  )}
 
                   {/* Nút Xóa (Đã sửa lỗi Type ở đây) */}
                   {canSoftDelete(user) && (

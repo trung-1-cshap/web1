@@ -3,7 +3,7 @@
 import React from "react";
 import type { Transaction, Category } from "../../../../lib/mockService";
 import { formatNumberVN } from "../../../../lib/format";
-import { canSoftDelete } from "../../../../lib/permissions";
+import { canSoftDelete, canEditTransaction } from "../../../../lib/permissions";
 
 type Props = {
   items: Transaction[];
@@ -195,12 +195,14 @@ export default function TransactionsTable({
                     </div>
                   ) : (
                     <div className="flex gap-3 justify-center">
-                      <button
-                        onClick={() => startEditTransaction(it)}
-                        className="text-blue-600 hover:underline"
-                      >
-                        Sửa
-                      </button>
+                      {canEditTransaction(user) && (
+                        <button
+                          onClick={() => startEditTransaction(it)}
+                          className="text-blue-600 hover:underline"
+                        >
+                          Sửa
+                        </button>
+                      )}
                       {canSoftDelete(user) && (
                         <button
                           onClick={() => handleDelete(String(it.id))}

@@ -116,6 +116,20 @@ export async function PUT(req: Request) {
       return NextResponse.json({ error: "Thiếu id" }, { status: 400 });
     }
 
+    // Authorization: require requesterEmail and block basic 'USER' role from editing customers
+    const requesterEmail = String(body?.requesterEmail ?? '').trim();
+    if (!requesterEmail) {
+      return NextResponse.json({ error: 'Missing requesterEmail' }, { status: 401 });
+    }
+    const requester = await prisma.user.findUnique({ where: { email: requesterEmail } });
+    if (!requester) {
+      return NextResponse.json({ error: 'Requester not found' }, { status: 403 });
+    }
+    const role = String(requester.role ?? '').toUpperCase();
+    if (role === 'USER') {
+      return NextResponse.json({ error: 'Không có quyền chỉnh sửa khách hàng' }, { status: 403 });
+    }
+
     const updated = await prisma.customer.update({
       where: { id: Number(id) },
       data: {
@@ -210,6 +224,20 @@ export async function DELETE(req: Request) {
 
     if (!id) {
       return NextResponse.json({ error: "Thiếu id" }, { status: 400 });
+    }
+
+    // Authorization: require requesterEmail and block basic 'USER' role from deleting customers
+    const requesterEmail = String(body?.requesterEmail ?? '').trim();
+    if (!requesterEmail) {
+      return NextResponse.json({ error: 'Missing requesterEmail' }, { status: 401 });
+    }
+    const requester = await prisma.user.findUnique({ where: { email: requesterEmail } });
+    if (!requester) {
+      return NextResponse.json({ error: 'Requester not found' }, { status: 403 });
+    }
+    const role = String(requester.role ?? '').toUpperCase();
+    if (role === 'USER') {
+      return NextResponse.json({ error: 'Không có quyền xóa khách hàng' }, { status: 403 });
     }
 
     if (permanent) {
