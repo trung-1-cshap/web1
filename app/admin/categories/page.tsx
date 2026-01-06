@@ -1,11 +1,10 @@
 "use client";
-
 import { useEffect, useState } from "react";
-import { 
-  getCategories, 
-  addCategory, 
-  deleteCategory, 
-  type Category 
+import {
+  getCategories,
+  addCategory,
+  deleteCategory,
+  type Category,
 } from "../../../lib/mockService";
 import { useAuth } from "../../components/AuthProvider";
 
@@ -35,7 +34,7 @@ export default function AdminCategoriesPage() {
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
     if (!name) return;
-    
+
     await addCategory({ name, type });
     setName("");
     // Reload lại dữ liệu sau khi thêm
@@ -45,8 +44,8 @@ export default function AdminCategoriesPage() {
   // ✅ SỬA LỖI Ở ĐÂY: Cho phép id là string HOẶC number
   async function handleDelete(id: string | number) {
     const role = String(currentUser?.role ?? "").toLowerCase();
-    if (role === 'user') {
-      alert('Bạn không có quyền xóa danh mục.');
+    if (role === "user") {
+      alert("Bạn không có quyền xóa danh mục.");
       return;
     }
 
@@ -63,26 +62,28 @@ export default function AdminCategoriesPage() {
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-6">Quản Lý Danh Mục</h1>
 
-      {/* Form thêm danh mục */}
-      <form onSubmit={handleAdd} className="flex gap-2 mb-8 bg-white p-4 rounded shadow">
-        <input 
-          className="border rounded px-3 py-2 flex-1" 
-          placeholder="Tên danh mục (Ví dụ: Tiền nhà, Lương...)" 
-          value={name} 
-          onChange={(e) => setName(e.target.value)} 
-        />
-        <select 
-          className="border rounded px-3 py-2" 
-          value={type} 
-          onChange={(e) => setType(e.target.value as "thu" | "chi")}
-        >
-          <option value="thu">Thu </option>
-          <option value="chi">Chi </option>
-        </select>
-        <button className="bg-slate-800 text-white px-4 py-2 rounded hover:bg-slate-700">
-          Thêm
-        </button>
-      </form>
+      {/* Ẩn form với role 'manager' */}
+      {currentRole !== "manager" ? (
+        <form onSubmit={handleAdd} className="flex gap-2 mb-8 bg-white p-4 rounded shadow">
+          <input
+            className="border rounded px-3 py-2 flex-1"
+            placeholder="Tên danh mục (Ví dụ: Tiền nhà, Lương...)"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+          <select
+            className="border rounded px-3 py-2"
+            value={type}
+            onChange={(e) => setType(e.target.value as "thu" | "chi")}
+          >
+            <option value="thu">Thu </option>
+            <option value="chi">Chi </option>
+          </select>
+          <button className="bg-slate-800 text-white px-4 py-2 rounded hover:bg-slate-700">Thêm</button>
+        </form>
+      ) : (
+        <div className="mb-8 p-4 bg-yellow-50 border rounded text-sm">Bạn không có quyền thêm danh mục.</div>
+      )}
 
       {/* Danh sách danh mục */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -90,20 +91,22 @@ export default function AdminCategoriesPage() {
         <div>
           <h3 className="font-semibold text-lg text-green-600 mb-3 border-b pb-2">Thu</h3>
           <div className="space-y-2">
-            {items.filter(i => i.type === 'thu' || i.type === 'INCOME').map((it) => (
-              <div key={it.id} className="flex justify-between items-center bg-white p-3 rounded border shadow-sm">
-                <span>{it.name}</span>
-                {currentRole !== 'user' && (
-                  <button 
-                    className="text-red-500 hover:text-red-700 text-sm px-2 py-1 rounded hover:bg-red-50"
-                    onClick={() => handleDelete(it.id)}
-                  >
-                    Xóa
-                  </button>
-                )}
-              </div>
-            ))}
-            {items.filter(i => i.type === 'thu' || i.type === 'INCOME').length === 0 && (
+            {items
+              .filter((i) => i.type === "thu" || i.type === "INCOME")
+              .map((it) => (
+                <div key={it.id} className="flex justify-between items-center bg-white p-3 rounded border shadow-sm">
+                  <span>{it.name}</span>
+                  {currentRole !== "user" && currentRole !== "manager" && (
+                    <button
+                      className="text-red-500 hover:text-red-700 text-sm px-2 py-1 rounded hover:bg-red-50"
+                      onClick={() => handleDelete(it.id)}
+                    >
+                      Xóa
+                    </button>
+                  )}
+                </div>
+              ))}
+            {items.filter((i) => i.type === "thu" || i.type === "INCOME").length === 0 && (
               <p className="text-gray-400 text-sm italic">Chưa có danh mục thu nào</p>
             )}
           </div>
@@ -113,20 +116,22 @@ export default function AdminCategoriesPage() {
         <div>
           <h3 className="font-semibold text-lg text-red-600 mb-3 border-b pb-2">Chi</h3>
           <div className="space-y-2">
-            {items.filter(i => i.type === 'chi' || i.type === 'EXPENSE').map((it) => (
-              <div key={it.id} className="flex justify-between items-center bg-white p-3 rounded border shadow-sm">
-                <span>{it.name}</span>
-                {currentRole !== 'user' && (
-                  <button 
-                    className="text-red-500 hover:text-red-700 text-sm px-2 py-1 rounded hover:bg-red-50"
-                    onClick={() => handleDelete(it.id)}
-                  >
-                    Xóa
-                  </button>
-                )}
-              </div>
-            ))}
-             {items.filter(i => i.type === 'chi' || i.type === 'EXPENSE').length === 0 && (
+            {items
+              .filter((i) => i.type === "chi" || i.type === "EXPENSE")
+              .map((it) => (
+                <div key={it.id} className="flex justify-between items-center bg-white p-3 rounded border shadow-sm">
+                  <span>{it.name}</span>
+                  {currentRole !== "user" && currentRole !== "manager" && (
+                    <button
+                      className="text-red-500 hover:text-red-700 text-sm px-2 py-1 rounded hover:bg-red-50"
+                      onClick={() => handleDelete(it.id)}
+                    >
+                      Xóa
+                    </button>
+                  )}
+                </div>
+              ))}
+            {items.filter((i) => i.type === "chi" || i.type === "EXPENSE").length === 0 && (
               <p className="text-gray-400 text-sm italic">Chưa có danh mục chi nào</p>
             )}
           </div>

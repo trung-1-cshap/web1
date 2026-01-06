@@ -22,10 +22,27 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const prisma = getPrisma();
-    const { name, type } = await req.json();
+    const body = await req.json();
+    const { name, type, email: requesterEmail } = body;
 
     if (!name) {
       return NextResponse.json({ error: "Missing name" }, { status: 400 });
+    }
+
+    // Require requesterEmail to authorize who is creating
+    const email = String(requesterEmail ?? '').trim();
+    if (!email) {
+      return NextResponse.json({ error: 'Missing requesterEmail' }, { status: 401 });
+    }
+    const requester = await prisma.user.findUnique({ where: { email } });
+    if (!requester) {
+      return NextResponse.json({ error: 'Requester not found' }, { status: 403 });
+    }
+    const role = String(requester.role ?? '').toUpperCase();
+
+    // Block MANAGER from creating categories
+    if (role === 'MANAGER') {
+      return NextResponse.json({ error: 'Không có quyền tạo danh mục' }, { status: 403 });
     }
 
     const normalized =
@@ -69,7 +86,8 @@ export async function DELETE(req: Request) {
       return NextResponse.json({ error: 'Requester not found' }, { status: 403 });
     }
     const role = String(requester.role ?? '').toUpperCase();
-    if (role === 'USER') {
+    // Block basic 'USER' and 'MANAGER' roles from deleting categories
+    if (role === 'USER' || role === 'MANAGER') {
       return NextResponse.json({ error: 'Không có quyền xóa' }, { status: 403 });
     }
 
