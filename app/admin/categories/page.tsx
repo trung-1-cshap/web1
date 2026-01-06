@@ -62,8 +62,8 @@ export default function AdminCategoriesPage() {
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-6">Quản Lý Danh Mục</h1>
 
-      {/* Ẩn form với role 'manager' */}
-      {currentRole !== "manager" ? (
+      {/* Ẩn form với role 'manager' và 'user' */}
+      {currentRole === "admin" ? (
         <form onSubmit={handleAdd} className="flex gap-2 mb-8 bg-white p-4 rounded shadow">
           <input
             className="border rounded px-3 py-2 flex-1"

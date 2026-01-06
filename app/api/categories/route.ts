@@ -40,8 +40,8 @@ export async function POST(req: Request) {
     }
     const role = String(requester.role ?? '').toUpperCase();
 
-    // Block MANAGER from creating categories
-    if (role === 'MANAGER') {
+    // Block MANAGER and USER from creating categories
+    if (role === 'MANAGER' || role === 'USER') {
       return NextResponse.json({ error: 'Không có quyền tạo danh mục' }, { status: 403 });
     }
 
