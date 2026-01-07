@@ -42,8 +42,8 @@ export default function CustomersTable({
           </tr>
         </thead>
         <tbody>
-          {safeCustomers.map((c) => (
-            <tr key={c.id} className="border-b hover:bg-gray-50">
+          {safeCustomers.map((c, i) => (
+            <tr key={String(c.id ?? `customer-${i}`)} className="border-b hover:bg-gray-50">
               <td className="px-4 py-3 font-medium text-gray-900">
                 {c.name}
               </td>
@@ -140,8 +140,8 @@ export default function CustomersTable({
             </tr>
           ))}
           {safeCustomers.length === 0 && (
-            <tr>
-              <td colSpan={8} className="px-4 py-8 text-center text-gray-400 italic">
+            <tr key="no-customers">
+              <td colSpan={9} className="px-4 py-8 text-center text-gray-400 italic">
                 Chưa có khách hàng nào
               </td>
             </tr>

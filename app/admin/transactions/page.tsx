@@ -13,6 +13,7 @@ import TrashSection from "./components/TrashSection";
 export default function TransactionsPage() {
   const [activeTab, setActiveTab] = useState<"transactions" | "customers" | "received" | "trash">("transactions");
   const { user } = useAuth();
+  const currentRole = String(user?.role ?? "").toLowerCase();
 
   const {
     transactions,
@@ -60,7 +61,9 @@ export default function TransactionsPage() {
         <button onClick={() => setActiveTab("transactions")} className={`px-4 py-2 border-b-2 font-medium whitespace-nowrap ${activeTab === "transactions" ? "border-slate-800 text-slate-800" : "border-transparent text-gray-500"}`}>💸 Giao dịch</button>
         <button onClick={() => setActiveTab("customers")} className={`px-4 py-2 border-b-2 font-medium whitespace-nowrap ${activeTab === "customers" ? "border-slate-800 text-slate-800" : "border-transparent text-gray-500"}`}>👥 Khách hàng</button>
         <button onClick={() => setActiveTab("received")} className={`px-4 py-2 border-b-2 font-medium whitespace-nowrap ${activeTab === "received" ? "border-slate-800 text-slate-800" : "border-transparent text-gray-500"}`}>✅ Đã thu</button>
-        <button onClick={() => setActiveTab("trash")} className={`px-4 py-2 border-b-2 font-medium whitespace-nowrap ${activeTab === "trash" ? "border-red-600 text-red-600" : "border-transparent text-gray-500"}`}>🗑️ Thùng rác</button>
+        {currentRole !== "user" && (
+          <button onClick={() => setActiveTab("trash")} className={`px-4 py-2 border-b-2 font-medium whitespace-nowrap ${activeTab === "trash" ? "border-red-600 text-red-600" : "border-transparent text-gray-500"}`}>🗑️ Thùng rác</button>
+        )}
       </div>
 
       <div className="animate-fade-in">
@@ -110,7 +113,7 @@ export default function TransactionsPage() {
           />
         )}
 
-        {activeTab === "trash" && (
+        {currentRole !== "user" && activeTab === "trash" && (
           <TrashSection
             trash={trash}
             customersTrash={customersTrash}
