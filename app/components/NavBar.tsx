@@ -3,12 +3,23 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "./AuthProvider";
 import { canExport } from "@/lib/permissions";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function NavBar() {
   const pathname = usePathname() || "/";
   // Đổi hydrated -> isLoading
   const { user, isLoading, logout } = useAuth();
+
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    function check() {
+      setIsMobile(typeof window !== "undefined" && window.innerWidth < 768);
+    }
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   // FIX: Nếu đang loading, hiển thị khung header rỗng để không bị nhảy layout
   if (isLoading) {
@@ -63,7 +74,9 @@ export default function NavBar() {
                 <div>Xin chào, {user.name}</div>
                 <div className="text-xs text-black/70">{String(user.role ?? "user")}</div>
               </Link>
-              <button onClick={logout} className="order-2 px-3 py-1 rounded-md bg-red-600 text-white text-sm">Đăng xuất</button>
+              {!(isMobile && pathname === "/") && (
+                <button onClick={logout} className="order-2 px-3 py-1 rounded-md bg-red-600 text-white text-sm">Đăng xuất</button>
+              )}
               <div className="order-3 md:hidden">
                 <MobileMenu navItems={navItems} user={user} isActive={isActive} logout={logout} />
               </div>
