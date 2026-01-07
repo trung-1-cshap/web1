@@ -75,12 +75,8 @@ export default function LoginPage() {
           Đăng nhập
         </button>
 
-        <div className="text-center mt-4 text-sm">
-          <span className="text-gray-600">Chưa có tài khoản? </span>
-          <Link href="/register" className="text-amber-600 font-semibold hover:underline">
-            Đăng ký ngay
-          </Link>
-        </div>
+        {/* Registration disabled: contact admin instead */}
+        <div className="text-center mt-4 text-sm text-gray-600">Vui lòng liên hệ quản trị viên để tạo tài khoản.</div>
       </form>
     </div>
   );
