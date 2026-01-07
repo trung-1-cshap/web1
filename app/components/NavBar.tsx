@@ -56,15 +56,17 @@ export default function NavBar() {
             </nav>
           </>
         )}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 md:flex-row flex-col md:items-center">
           {user ? (
             <>
-              <MobileMenu navItems={navItems} user={user} isActive={isActive} logout={logout} />
-              <Link href="/profile" className="text-sm text-black hover:underline hidden sm:block">
+              <Link href="/profile" className="text-sm text-black hover:underline hidden sm:block order-1">
                 <div>Xin chào, {user.name}</div>
                 <div className="text-xs text-black/70">{String(user.role ?? "user")}</div>
               </Link>
-              <button onClick={logout} className="px-3 py-1 rounded-md bg-red-600 text-white text-sm">Đăng xuất</button>
+              <button onClick={logout} className="order-2 px-3 py-1 rounded-md bg-red-600 text-white text-sm">Đăng xuất</button>
+              <div className="order-3 md:hidden">
+                <MobileMenu navItems={navItems} user={user} isActive={isActive} logout={logout} />
+              </div>
             </>
           ) : (
             <Link href="/login" className="px-4 py-2 rounded-md font-bold text-black bg-linear-to-r from-amber-400 to-amber-800">Đăng Nhập</Link>
