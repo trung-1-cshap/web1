@@ -74,7 +74,7 @@ export default function NavBar() {
                 <div>Xin chào, {user.name}</div>
                 <div className="text-xs text-black/70">{String(user.role ?? "user")}</div>
               </Link>
-              {!(isMobile && pathname === "/") && (
+              {!isMobile && (
                 <button onClick={logout} className="order-2 px-3 py-1 rounded-md bg-red-600 text-white text-sm">Đăng xuất</button>
               )}
               <div className="order-3 md:hidden">
