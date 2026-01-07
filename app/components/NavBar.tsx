@@ -54,14 +54,12 @@ export default function NavBar() {
                 ))}
               </ul>
             </nav>
-
-            {/* Mobile hamburger */}
-            <MobileMenu navItems={navItems} user={user} isActive={isActive} logout={logout} />
           </>
         )}
         <div className="flex items-center gap-4">
           {user ? (
             <>
+              <MobileMenu navItems={navItems} user={user} isActive={isActive} logout={logout} />
               <Link href="/profile" className="text-sm text-black hover:underline hidden sm:block">
                 <div>Xin chào, {user.name}</div>
                 <div className="text-xs text-black/70">{String(user.role ?? "user")}</div>
