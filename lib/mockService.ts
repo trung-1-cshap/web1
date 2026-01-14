@@ -109,7 +109,7 @@ export function getTransactions(includeDeleted: boolean = false): Promise<Transa
   return Promise.resolve([]);
 }
 
-export function addTransaction(payload: Omit<Transaction, "id">): Promise<Transaction> {
+export function addTransaction(payload: Omit<Transaction, "id"> & { email?: string }): Promise<Transaction> {
   if (typeof window !== 'undefined') {
     const email = getCurrentUserEmail();
     const bodyToSend = { ...payload, email: email };
