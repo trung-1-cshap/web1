@@ -44,6 +44,7 @@ export default function TransactionsSection({
     const [categoryId, setCategoryId] = useState<string | number>("");
     const [type, setType] = useState<"thu" | "chi">("thu");
     const [date, setDate] = useState(new Date().toISOString().slice(0, 16));
+    const [searchName, setSearchName] = useState("");
 
     const onAdd = (e: React.FormEvent) => {
         e.preventDefault();
@@ -134,13 +135,29 @@ export default function TransactionsSection({
               </div>
             )}
 
-            <div className="flex items-center justify-end gap-2">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <input
+                  type="search"
+                  placeholder="Tìm theo tên / mô tả..."
+                  value={searchName}
+                  onChange={(e) => setSearchName(e.target.value)}
+                  className="border p-2 rounded text-sm"
+                />
+              </div>
               <button onClick={handleExportXlsx} title="Xuất tất cả giao dịch ra file Excel" aria-label="Xuất Excel giao dịch" className="bg-emerald-600 text-white px-3 py-1 rounded text-sm hover:bg-emerald-500">Xuất Excel</button>
             </div>
 
             {/* Bảng Danh Sách */}
             <TransactionsTable 
-                items={items}
+                items={Array.isArray(items) && searchName.trim() !== "" ? items.filter(t => {
+                  const q = searchName.trim().toLowerCase();
+                  return (
+                    (t.description ?? "").toString().toLowerCase().includes(q) ||
+                    (t.performedBy ?? "").toString().toLowerCase().includes(q) ||
+                    (t.user?.name ?? "").toString().toLowerCase().includes(q)
+                  );
+                }) : items}
                 categories={categories}
                 user={user}
                 handleDelete={handleDeleteTransaction}

@@ -31,14 +31,17 @@ export default function CustomersSection({
   // State cho form thêm mới
   const [newName, setNewName] = useState("");
   const [newPhone, setNewPhone] = useState("");
+  const [newNote, setNewNote] = useState("");
   const [newDeposit, setNewDeposit] = useState<number | "">("");
   const [newContract, setNewContract] = useState<number | "">("");
   const [newContractMonths, setNewContractMonths] = useState<number | "">("");
   const [newCommission, setNewCommission] = useState<number | "">("");
+  const [searchName, setSearchName] = useState("");
 
   // State cho form sửa
   const [editName, setEditName] = useState("");
   const [editPhone, setEditPhone] = useState("");
+  const [editNote, setEditNote] = useState("");
   const [editDeposit, setEditDeposit] = useState<number | "">("");
   const [editContract, setEditContract] = useState<number | "">("");
   const [editContractMonths, setEditContractMonths] = useState<number | "">("");
@@ -49,6 +52,7 @@ export default function CustomersSection({
     setEditingCustomer(c);
     setEditName(c.name);
     setEditPhone(c.phone || "");
+    setEditNote(c.note || "");
     setEditDeposit(c.depositAmount || "");
     setEditContract(c.contractAmount || "");
     setEditContractMonths(c.contractValidityMonths ?? "");
@@ -68,6 +72,7 @@ export default function CustomersSection({
     await handleUpdateCustomer(String(editingCustomer.id), {
       name: editName,
       phone: editPhone,
+      note: editNote,
       depositAmount: editDeposit === "" ? 0 : Number(editDeposit),
       contractAmount: editContract === "" ? 0 : Number(editContract),
       contractValidityMonths: editContractMonths === "" ? undefined : Number(editContractMonths),
@@ -75,14 +80,13 @@ export default function CustomersSection({
     });
     cancelEdit();
   }
-
-  // Thêm mới
   async function onAdd(e: React.FormEvent) {
     e.preventDefault();
     if (!newName) return;
     await handleAddCustomer({
       name: newName,
       phone: newPhone,
+      note: newNote,
       depositAmount: newDeposit === "" ? 0 : Number(newDeposit),
       contractAmount: newContract === "" ? 0 : Number(newContract),
       contractValidityMonths: newContractMonths === "" ? undefined : Number(newContractMonths),
@@ -90,9 +94,11 @@ export default function CustomersSection({
       received: false,
       approved: false,
     });
+
     // Reset form
     setNewName("");
     setNewPhone("");
+    setNewNote("");
     setNewDeposit("");
     setNewContract("");
     setNewContractMonths("");
@@ -106,23 +112,25 @@ export default function CustomersSection({
       </h3>
 
       <div className="flex items-center justify-end mb-4">
-        <button onClick={async () => {
-          const rows = customers.map(c => ({
-            ID: c.id,
-            Name: c.name,
-            Phone: c.phone || "",
-            Email: c.email || "",
-            DepositAmount: Number(c.depositAmount ?? 0),
-            ContractAmount: Number(c.contractAmount ?? 0),
-            Received: Boolean(c.received),
-            CreatedAt: c.createdAt || ""
-          }));
-          const XLSX = await import('xlsx');
-          const ws = XLSX.utils.json_to_sheet(rows);
-          const wb = XLSX.utils.book_new();
-          XLSX.utils.book_append_sheet(wb, ws, 'Customers');
-          XLSX.writeFile(wb, 'customers.xlsx');
-        }} title="Xuất tất cả khách hàng ra file Excel" aria-label="Xuất Excel khách hàng" className="bg-emerald-600 text-white px-3 py-1 rounded text-sm hover:bg-emerald-500 ml-2">Xuất Excel</button>
+        <div className="flex items-center gap-2">
+          <button onClick={async () => {
+            const rows = customers.map(c => ({
+              ID: c.id,
+              Name: c.name,
+              Phone: c.phone || "",
+              Email: c.email || "",
+              DepositAmount: Number(c.depositAmount ?? 0),
+              ContractAmount: Number(c.contractAmount ?? 0),
+              Received: Boolean(c.received),
+              CreatedAt: c.createdAt || ""
+            }));
+            const XLSX = await import('xlsx');
+            const ws = XLSX.utils.json_to_sheet(rows);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Customers');
+            XLSX.writeFile(wb, 'customers.xlsx');
+          }} title="Xuất tất cả khách hàng ra file Excel" aria-label="Xuất Excel khách hàng" className="bg-emerald-600 text-white px-3 py-1 rounded text-sm hover:bg-emerald-500 ml-2">Xuất Excel</button>
+        </div>
       </div>
 
       {/* Form thêm khách hàng */}
@@ -142,6 +150,12 @@ export default function CustomersSection({
               placeholder="Số điện thoại"
               value={newPhone}
               onChange={(e) => setNewPhone(e.target.value)}
+            />
+            <input
+              className="border p-2 rounded"
+              placeholder="Ghi chú"
+              value={newNote}
+              onChange={(e) => setNewNote(e.target.value)}
             />
             <input
               type="number"
@@ -182,7 +196,18 @@ export default function CustomersSection({
         <div className="bg-gray-50 p-4 rounded mb-6 border border-gray-200 text-sm text-gray-600">Bạn không có quyền tạo khách hàng.</div>
       )}
 
-      {/* Modal Sửa Khách Hàng */}
+          {/* Tìm kiếm khách hàng (nằm dưới form thêm khách hàng) */}
+          <div className="mb-4">
+            <input
+              type="search"
+              placeholder="Tìm khách hàng theo tên, SĐT hoặc ghi chú..."
+              value={searchName}
+              onChange={(e) => setSearchName(e.target.value)}
+              className="border p-2 rounded text-sm w-full md:w-64"
+            />
+          </div>
+
+          {/* Modal Sửa Khách Hàng */}
       {isEditing && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded shadow-lg w-full max-w-md">
@@ -199,6 +224,12 @@ export default function CustomersSection({
                 placeholder="SĐT"
                 value={editPhone}
                 onChange={(e) => setEditPhone(e.target.value)}
+              />
+              <input
+                className="border p-2 rounded"
+                placeholder="Ghi chú"
+                value={editNote}
+                onChange={(e) => setEditNote(e.target.value)}
               />
               <div className="grid grid-cols-3 gap-2">
                 <input
@@ -239,16 +270,31 @@ export default function CustomersSection({
         </div>
       )}
 
-      {/* Bảng danh sách khách hàng */}
-      <CustomersTable
-        customers={customers}
-        user={user}
-        startEditCustomer={startEditCustomer}
-        handleDeleteCustomer={handleDeleteCustomer}
-        // ✅ FIX LỖI Ở ĐÂY: Thêm hàm dự phòng (async () => {}) nếu handleApproveCustomer bị null
-        handleApproveCustomer={handleApproveCustomer ?? (async () => {})}
-        toggleCustomerReceived={toggleCustomerReceived}
-      />
+      {/* Bảng danh sách khách hàng (có lọc client-side theo tên / SĐT / ghi chú) */}
+      {
+        (() => {
+          const q = String(searchName ?? "").trim().toLowerCase();
+          const filtered = q === "" ? customers : (Array.isArray(customers) ? customers.filter(c => {
+            return (
+              (c.name ?? "").toString().toLowerCase().includes(q) ||
+              (c.phone ?? "").toString().toLowerCase().includes(q) ||
+              (c.note ?? "").toString().toLowerCase().includes(q)
+            );
+          }) : customers);
+
+          return (
+            <CustomersTable
+              customers={filtered}
+              user={user}
+              startEditCustomer={startEditCustomer}
+              handleDeleteCustomer={handleDeleteCustomer}
+              // ✅ FIX LỖI Ở ĐÂY: Thêm hàm dự phòng (async () => {}) nếu handleApproveCustomer bị null
+              handleApproveCustomer={handleApproveCustomer ?? (async () => {})}
+              toggleCustomerReceived={toggleCustomerReceived}
+            />
+          );
+        })()
+      }
     </div>
   );
 }

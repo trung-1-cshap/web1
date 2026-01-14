@@ -21,9 +21,6 @@ export default function Footer() {
               Cầu nối uy tín giữa người cho thuê và người cần thuê.
             </p>
           </div>
-
-
-     
           <div>
             <h4 className="font-semibold text-white mb-4">Liên hệ</h4>
             <ul className="space-y-3 text-gray-200">

@@ -32,6 +32,7 @@ export default function CustomersTable({
           <tr>
             <th className="px-4 py-3">Tên khách hàng</th>
             <th className="px-4 py-3">SĐT</th>
+            <th className="px-4 py-3">Ghi chú</th>
             <th className="px-4 py-3 text-right">Tiền Cọc</th>
             <th className="px-4 py-3 text-right">Tiền HĐ</th>
             <th className="px-4 py-3 text-center">Số tháng</th>
@@ -49,6 +50,9 @@ export default function CustomersTable({
               </td>
               <td className="px-4 py-3">
                 {c.phone ?? "-"}
+              </td>
+              <td className="px-4 py-3 max-w-xs truncate text-sm text-gray-600">
+                {c.note ? String(c.note) : "-"}
               </td>
               <td className="px-4 py-3 text-right text-gray-600">
                 {c.depositAmount != null ? formatVND(c.depositAmount) : "-"}

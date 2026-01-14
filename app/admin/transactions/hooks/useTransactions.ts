@@ -98,6 +98,8 @@ export default function useTransactions(user: any) {
         accountName: accName,
         description: payload.description || "",
         performedBy: user?.name || user?.email,
+        // ensure backend receives requester email so it can authorize and save
+        email: user?.email ?? undefined,
         approved: payload.approved || false,
         received: payload.received || false,
       });

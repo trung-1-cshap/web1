@@ -86,6 +86,7 @@ model Customer {
   contractValidityMonths Int?
   deleted                Boolean   @default(false)
   deletedAt              DateTime?
+  note                   String?
 }
 
 enum TransactionType {

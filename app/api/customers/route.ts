@@ -92,6 +92,7 @@ export async function POST(req: Request) {
         performedBy: body.performedBy
           ? String(body.performedBy)
           : null,
+        note: body.note ? String(body.note) : null,
       },
     });
 
@@ -197,6 +198,12 @@ export async function PUT(req: Request) {
           data.performedBy !== undefined
             ? data.performedBy
               ? String(data.performedBy)
+              : null
+            : undefined,
+        note:
+          data.note !== undefined
+            ? data.note != null
+              ? String(data.note)
               : null
             : undefined,
         // Handle soft-delete toggle if provided
