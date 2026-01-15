@@ -58,11 +58,38 @@ export default function TransactionsPage() {
       </div>
 
       <div className="flex gap-2 border-b mb-6 overflow-x-auto">
-        <button onClick={() => setActiveTab("transactions")} className={`px-4 py-2 border-b-2 font-medium whitespace-nowrap ${activeTab === "transactions" ? "border-slate-800 text-slate-800" : "border-transparent text-gray-500"}`}>💸 Giao dịch</button>
-        <button onClick={() => setActiveTab("customers")} className={`px-4 py-2 border-b-2 font-medium whitespace-nowrap ${activeTab === "customers" ? "border-slate-800 text-slate-800" : "border-transparent text-gray-500"}`}>👥 Khách hàng</button>
-        <button onClick={() => setActiveTab("received")} className={`px-4 py-2 border-b-2 font-medium whitespace-nowrap ${activeTab === "received" ? "border-slate-800 text-slate-800" : "border-transparent text-gray-500"}`}>✅ Đã thu</button>
+        <button
+          onClick={() => setActiveTab("transactions")}
+          aria-pressed={activeTab === "transactions"}
+          className={`px-4 py-2 border-b-2 font-medium whitespace-nowrap transition-all duration-150 ${activeTab === "transactions" ? "border-slate-800 text-slate-800 bg-slate-50 shadow-sm rounded-t-md scale-100" : "border-transparent text-gray-500 hover:text-slate-800 hover:shadow-sm hover:scale-[1.02]"}`}
+        >
+          💸 Giao dịch
+        </button>
+
+        <button
+          onClick={() => setActiveTab("customers")}
+          aria-pressed={activeTab === "customers"}
+          className={`px-4 py-2 border-b-2 font-medium whitespace-nowrap transition-all duration-150 ${activeTab === "customers" ? "border-slate-800 text-slate-800 bg-slate-50 shadow-sm rounded-t-md scale-100" : "border-transparent text-gray-500 hover:text-slate-800 hover:shadow-sm hover:scale-[1.02]"}`}
+        >
+          👥 Khách hàng
+        </button>
+
+        <button
+          onClick={() => setActiveTab("received")}
+          aria-pressed={activeTab === "received"}
+          className={`px-4 py-2 border-b-2 font-medium whitespace-nowrap transition-all duration-150 ${activeTab === "received" ? "border-slate-800 text-slate-800 bg-slate-50 shadow-sm rounded-t-md scale-100" : "border-transparent text-gray-500 hover:text-slate-800 hover:shadow-sm hover:scale-[1.02]"}`}
+        >
+          ✅ Đã thu
+        </button>
+
         {currentRole !== "user" && (
-          <button onClick={() => setActiveTab("trash")} className={`px-4 py-2 border-b-2 font-medium whitespace-nowrap ${activeTab === "trash" ? "border-red-600 text-red-600" : "border-transparent text-gray-500"}`}>🗑️ Thùng rác</button>
+          <button
+            onClick={() => setActiveTab("trash")}
+            aria-pressed={activeTab === "trash"}
+            className={`px-4 py-2 border-b-2 font-medium whitespace-nowrap transition-all duration-150 ${activeTab === "trash" ? "border-red-600 text-red-600 bg-red-50 shadow-sm rounded-t-md scale-100" : "border-transparent text-gray-500 hover:text-red-600 hover:shadow-sm hover:scale-[1.02]"}`}
+          >
+            🗑️ Thùng rác
+          </button>
         )}
       </div>
 
