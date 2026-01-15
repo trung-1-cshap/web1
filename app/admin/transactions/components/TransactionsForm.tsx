@@ -4,8 +4,8 @@ import React from "react";
 import type { Category } from "../../../../lib/mockService";
 
 type Props = {
-  amount: number;
-  setAmount: (v: number) => void;
+  amount: number | "";
+  setAmount: (v: number | "") => void;
   type: "thu" | "chi";
   setType: (v: "thu" | "chi") => void;
   categoryId?: string;
