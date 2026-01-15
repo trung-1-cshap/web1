@@ -117,7 +117,17 @@ export default function TransactionsSection({
 
                        <div className="md:col-span-1">
                           <label className="block text-xs text-gray-500 mb-1">Số tiền</label>
-                          <input type="number" placeholder="0" className="border p-2 rounded w-full text-sm font-bold" value={amount} onChange={e => setAmount(Number(e.target.value))} required />
+                          <input
+                            inputMode="decimal"
+                            placeholder="0"
+                            className="border p-2 rounded w-full text-sm font-bold"
+                            value={amount}
+                            onChange={e => {
+                              const v = String(e.target.value).replace(/[^0-9.]/g, '');
+                              setAmount(v === '' ? '' : Number(v));
+                            }}
+                            required
+                          />
                        </div>
 
                        <div className="md:col-span-2">
@@ -142,7 +152,7 @@ export default function TransactionsSection({
                   placeholder="Tìm theo tên / mô tả..."
                   value={searchName}
                   onChange={(e) => setSearchName(e.target.value)}
-                  className="border p-2 rounded text-sm"
+                  className="border p-2 rounded text-sm hover:shadow-md hover:border-gray-300 transition-shadow duration-150 focus:outline-none focus:ring-2 focus:ring-emerald-100"
                 />
               </div>
               <button onClick={handleExportXlsx} title="Xuất tất cả giao dịch ra file Excel" aria-label="Xuất Excel giao dịch" className="bg-emerald-600 text-white px-3 py-1 rounded text-sm hover:bg-emerald-500">Xuất Excel</button>

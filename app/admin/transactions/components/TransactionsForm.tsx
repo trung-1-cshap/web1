@@ -19,7 +19,16 @@ type Props = {
 export default function TransactionsForm({ amount, setAmount, type, setType, categoryId, setCategoryId, actorName, setActorName, categories, onAdd }: Props) {
   return (
     <form onSubmit={onAdd} className="flex flex-wrap gap-2 mb-4 items-center">
-      <input type="number" className="border rounded px-3 py-2" placeholder="Số tiền" value={amount || ""} onChange={(e) => setAmount(Number(e.target.value))} />
+      <input
+        inputMode="decimal"
+        className="border rounded px-3 py-2"
+        placeholder="Số tiền"
+        value={amount || ""}
+        onChange={(e) => {
+          const v = String(e.target.value).replace(/[^0-9.]/g, '');
+          setAmount(v === '' ? '' : Number(v));
+        }}
+      />
       <select className="border rounded px-3 py-2" value={type} onChange={(e) => setType(e.target.value as any)}>
         <option value="thu">Thu</option>
         <option value="chi">Chi</option>

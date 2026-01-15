@@ -146,10 +146,12 @@ export default function CustomersSection({
               required
             />
             <input
+              inputMode="numeric"
+              pattern="\\d*"
               className="border p-2 rounded"
               placeholder="Số điện thoại"
               value={newPhone}
-              onChange={(e) => setNewPhone(e.target.value)}
+              onChange={(e) => setNewPhone(e.target.value.replace(/\\D/g, ''))}
             />
             <input
               className="border p-2 rounded"
@@ -158,33 +160,46 @@ export default function CustomersSection({
               onChange={(e) => setNewNote(e.target.value)}
             />
             <input
-              type="number"
+              inputMode="decimal"
               className="border p-2 rounded"
               placeholder="Tiền cọc"
               value={newDeposit}
-              onChange={(e) => setNewDeposit(e.target.value ? Number(e.target.value) : "")}
+              onChange={(e) => {
+                const v = e.target.value.replace(/[^0-9.]/g, '');
+                setNewDeposit(v === '' ? '' : Number(v));
+              }}
             />
             <input
-              type="number"
+              inputMode="decimal"
               className="border p-2 rounded"
               placeholder="Tiền Hợp đồng"
               value={newContract}
-              onChange={(e) => setNewContract(e.target.value ? Number(e.target.value) : "")}
+              onChange={(e) => {
+                const v = e.target.value.replace(/[^0-9.]/g, '');
+                setNewContract(v === '' ? '' : Number(v));
+              }}
             />
             <input
-              type="number"
+              inputMode="numeric"
+              pattern="\\d*"
               className="border p-2 rounded"
               placeholder="Số tháng hợp đồng"
               value={newContractMonths}
-              onChange={(e) => setNewContractMonths(e.target.value ? Number(e.target.value) : "")}
+              onChange={(e) => {
+                const v = e.target.value.replace(/\\D/g, '');
+                setNewContractMonths(v === '' ? '' : Number(v));
+              }}
             />
             <div className="flex gap-2">
               <input
-                type="number"
+                inputMode="decimal"
                 className="border p-2 rounded w-24"
                 placeholder="% HH"
                 value={newCommission}
-                onChange={(e) => setNewCommission(e.target.value ? Number(e.target.value) : "")}
+                onChange={(e) => {
+                  const v = e.target.value.replace(/[^0-9.]/g, '');
+                  setNewCommission(v === '' ? '' : Number(v));
+                }}
               />
               <button className="bg-slate-800 text-white px-4 py-2 rounded hover:bg-slate-700 flex-1">
                 Thêm
@@ -203,7 +218,7 @@ export default function CustomersSection({
               placeholder="Tìm khách hàng theo tên, SĐT hoặc ghi chú..."
               value={searchName}
               onChange={(e) => setSearchName(e.target.value)}
-              className="border p-2 rounded text-sm w-full md:w-64"
+              className="border p-2 rounded text-sm w-full md:w-64 hover:shadow-md hover:border-gray-300 transition-shadow duration-150 focus:outline-none focus:ring-2 focus:ring-emerald-100"
             />
           </div>
 
