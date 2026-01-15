@@ -32,6 +32,7 @@ export default function CustomersSection({
   const [newName, setNewName] = useState("");
   const [newPhone, setNewPhone] = useState("");
   const [newNote, setNewNote] = useState("");
+  const [newContractDate, setNewContractDate] = useState<string | "">("");
   const [newDeposit, setNewDeposit] = useState<number | "">("");
   const [newContract, setNewContract] = useState<number | "">("");
   const [newContractMonths, setNewContractMonths] = useState<number | "">("");
@@ -42,6 +43,7 @@ export default function CustomersSection({
   const [editName, setEditName] = useState("");
   const [editPhone, setEditPhone] = useState("");
   const [editNote, setEditNote] = useState("");
+  const [editContractDate, setEditContractDate] = useState<string | "">("");
   const [editDeposit, setEditDeposit] = useState<number | "">("");
   const [editContract, setEditContract] = useState<number | "">("");
   const [editContractMonths, setEditContractMonths] = useState<number | "">("");
@@ -53,6 +55,7 @@ export default function CustomersSection({
     setEditName(c.name);
     setEditPhone(c.phone || "");
     setEditNote(c.note || "");
+    setEditContractDate(c.contractDate || "");
     setEditDeposit(c.depositAmount || "");
     setEditContract(c.contractAmount || "");
     setEditContractMonths(c.contractValidityMonths ?? "");
@@ -73,6 +76,7 @@ export default function CustomersSection({
       name: editName,
       phone: editPhone,
       note: editNote,
+      contractDate: editContractDate === "" ? undefined : String(editContractDate),
       depositAmount: editDeposit === "" ? 0 : Number(editDeposit),
       contractAmount: editContract === "" ? 0 : Number(editContract),
       contractValidityMonths: editContractMonths === "" ? undefined : Number(editContractMonths),
@@ -87,6 +91,7 @@ export default function CustomersSection({
       name: newName,
       phone: newPhone,
       note: newNote,
+      contractDate: newContractDate === "" ? undefined : String(newContractDate),
       depositAmount: newDeposit === "" ? 0 : Number(newDeposit),
       contractAmount: newContract === "" ? 0 : Number(newContract),
       contractValidityMonths: newContractMonths === "" ? undefined : Number(newContractMonths),
@@ -99,6 +104,7 @@ export default function CustomersSection({
     setNewName("");
     setNewPhone("");
     setNewNote("");
+    setNewContractDate("");
     setNewDeposit("");
     setNewContract("");
     setNewContractMonths("");
@@ -158,6 +164,13 @@ export default function CustomersSection({
               placeholder="Ghi chú"
               value={newNote}
               onChange={(e) => setNewNote(e.target.value)}
+            />
+            <input
+              type="date"
+              className="border p-2 rounded"
+              placeholder="Ngày GD hợp đồng"
+              value={newContractDate}
+              onChange={(e) => setNewContractDate(e.target.value)}
             />
             <input
               inputMode="decimal"
@@ -245,6 +258,13 @@ export default function CustomersSection({
                 placeholder="Ghi chú"
                 value={editNote}
                 onChange={(e) => setEditNote(e.target.value)}
+              />
+              <input
+                type="date"
+                className="border p-2 rounded"
+                placeholder="Ngày GD hợp đồng"
+                value={editContractDate}
+                onChange={(e) => setEditContractDate(e.target.value)}
               />
               <div className="grid grid-cols-3 gap-2">
                 <input
