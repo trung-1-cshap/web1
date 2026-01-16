@@ -9,11 +9,24 @@ export async function GET(req: Request) {
     const prisma = getPrisma();
     const url = new URL(req.url);
     const deletedParam = url.searchParams.get("deleted");
+    const requesterEmail = String(url.searchParams.get("requesterEmail") ?? "").trim();
     console.debug('[api/transactions] GET', { url: req.url, deletedParam });
     const whereClause: any = {};
     if (deletedParam === "true") whereClause.deleted = true;
     else whereClause.deleted = false;
     console.debug('[api/transactions] whereClause', whereClause);
+
+    // If a requesterEmail is provided, fetch the requester and if their role is USER,
+    // restrict transactions to those created by that user.
+    if (requesterEmail) {
+      const requester = await prisma.user.findUnique({ where: { email: requesterEmail } });
+      if (requester) {
+        const role = String(requester.role ?? "").toUpperCase();
+        if (role === 'USER') {
+          whereClause.userId = requester.id;
+        }
+      }
+    }
 
     const txs = await prisma.transaction.findMany({
       where: whereClause,

@@ -31,6 +31,7 @@ export default function RootLayout({
     <html lang="vi">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        style={{ overscrollBehaviorX: "contain", overscrollBehaviorY: "contain" }}
       >
         <AuthProvider>
           <NavBar />

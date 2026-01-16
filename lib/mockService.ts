@@ -98,7 +98,11 @@ export type Transaction = {
 
 export function getTransactions(includeDeleted: boolean = false): Promise<Transaction[]> {
   if (typeof window !== 'undefined') {
-    const url = '/api/transactions' + (includeDeleted ? '?deleted=true' : '');
+    const email = getCurrentUserEmail();
+    const qs = []; 
+    if (includeDeleted) qs.push('deleted=true');
+    if (email) qs.push(`requesterEmail=${encodeURIComponent(email)}`);
+    const url = '/api/transactions' + (qs.length ? `?${qs.join('&')}` : '');
     return fetch(url)
       .then(async (r) => {
         if (!r.ok) return [];
@@ -251,7 +255,11 @@ export type Customer = {
 
 export function getCustomers(includeDeleted: boolean = false): Promise<Customer[]> {
   if (typeof window !== 'undefined') {
-    const url = '/api/customers' + (includeDeleted ? '?deleted=true' : '');
+    const email = getCurrentUserEmail();
+    const qs = [];
+    if (includeDeleted) qs.push('deleted=true');
+    if (email) qs.push(`requesterEmail=${encodeURIComponent(email)}`);
+    const url = '/api/customers' + (qs.length ? `?${qs.join('&')}` : '');
     return fetch(url).then((r) => {
         if (!r.ok) return [];
         return r.json();

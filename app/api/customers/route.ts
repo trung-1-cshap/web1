@@ -9,10 +9,26 @@ export async function GET(req: Request) {
     const prisma = getPrisma();
     const url = new URL(req.url);
     const deletedParam = url.searchParams.get("deleted");
-    console.debug('[api/customers] GET', { url: req.url, deletedParam });
+    const requesterEmail = String(url.searchParams.get("requesterEmail") ?? "").trim();
+    console.debug('[api/customers] GET', { url: req.url, deletedParam, requesterEmail });
     const whereClause: any = {};
     if (deletedParam === "true") whereClause.deleted = true;
     else whereClause.deleted = false;
+
+    // If requesterEmail provided and requester is USER, restrict to customers they created
+    if (requesterEmail) {
+      const requester = await prisma.user.findUnique({ where: { email: requesterEmail } });
+      if (requester) {
+        const role = String(requester.role ?? "").toUpperCase();
+        if (role === 'USER') {
+          // performedBy may store name or email; allow either
+          whereClause.OR = [
+            { performedBy: requester.email },
+            { performedBy: requester.name },
+          ];
+        }
+      }
+    }
 
     const customers = await prisma.customer.findMany({
       where: whereClause,
