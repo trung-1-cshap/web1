@@ -10,6 +10,11 @@ export async function GET(req: Request) {
     const url = new URL(req.url);
     const deletedParam = url.searchParams.get("deleted");
     const requesterEmail = String(url.searchParams.get("requesterEmail") ?? "").trim();
+    const limitParam = Number(url.searchParams.get("limit") ?? "50");
+    const pageParam = Number(url.searchParams.get("page") ?? "1");
+    const limit = Number.isFinite(limitParam) && limitParam > 0 ? Math.min(limitParam, 200) : 50;
+    const page = Number.isFinite(pageParam) && pageParam > 0 ? pageParam : 1;
+    const skip = (page - 1) * limit;
     console.debug('[api/transactions] GET', { url: req.url, deletedParam });
     const whereClause: any = {};
     if (deletedParam === "true") whereClause.deleted = true;
@@ -28,17 +33,27 @@ export async function GET(req: Request) {
       }
     }
 
-    const txs = await prisma.transaction.findMany({
-      where: whereClause,
-      orderBy: { createdAt: "desc" },
-      include: {
-        category: { select: { id: true, name: true } },
-        account: { select: { id: true, name: true } },
-        user: { select: { id: true, name: true, email: true } },
-      },
-    });
+    // Count + paginated fetch (reduce payload and DB work)
+    const [total, txs] = await Promise.all([
+      prisma.transaction.count({ where: whereClause }),
+      prisma.transaction.findMany({
+        where: whereClause,
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: limit,
+        include: {
+          category: { select: { id: true, name: true } },
+          account: { select: { id: true, name: true } },
+          user: { select: { id: true, name: true, email: true } },
+        },
+      }),
+    ]);
 
-    return NextResponse.json(txs);
+    const res = NextResponse.json(txs);
+    res.headers.set("X-Total-Count", String(total));
+    res.headers.set("X-Page", String(page));
+    res.headers.set("X-Limit", String(limit));
+    return res;
   } catch (err) {
     console.error("GET /api/transactions error:", err);
     return NextResponse.json(

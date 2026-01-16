@@ -10,6 +10,11 @@ export async function GET(req: Request) {
     const url = new URL(req.url);
     const deletedParam = url.searchParams.get("deleted");
     const requesterEmail = String(url.searchParams.get("requesterEmail") ?? "").trim();
+    const limitParam = Number(url.searchParams.get("limit") ?? "50");
+    const pageParam = Number(url.searchParams.get("page") ?? "1");
+    const limit = Number.isFinite(limitParam) && limitParam > 0 ? Math.min(limitParam, 200) : 50;
+    const page = Number.isFinite(pageParam) && pageParam > 0 ? pageParam : 1;
+    const skip = (page - 1) * limit;
     console.debug('[api/customers] GET', { url: req.url, deletedParam, requesterEmail });
     const whereClause: any = {};
     if (deletedParam === "true") whereClause.deleted = true;
@@ -30,11 +35,21 @@ export async function GET(req: Request) {
       }
     }
 
-    const customers = await prisma.customer.findMany({
-      where: whereClause,
-      orderBy: { createdAt: "desc" },
-    });
-    return NextResponse.json(customers);
+    const [total, customers] = await Promise.all([
+      prisma.customer.count({ where: whereClause }),
+      prisma.customer.findMany({
+        where: whereClause,
+        orderBy: { createdAt: "desc" },
+        skip,
+        take: limit,
+      }),
+    ]);
+
+    const res = NextResponse.json(customers);
+    res.headers.set("X-Total-Count", String(total));
+    res.headers.set("X-Page", String(page));
+    res.headers.set("X-Limit", String(limit));
+    return res;
   } catch (err) {
     console.error("GET /api/customers error:", err);
     return NextResponse.json([], { status: 500 });
