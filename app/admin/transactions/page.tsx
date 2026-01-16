@@ -100,8 +100,6 @@ export default function TransactionsPage() {
             handleUpdateTransaction={async (id, data) => { console.log("Update", id, data); }}
             handleAddTransaction={handleAdd} // Truyền trực tiếp hàm handleAdd từ hook (lưu ý: logic form đã chuyển vào section, ở đây hook cần cung cấp hàm nhận payload)
             // LƯU Ý: Hook useTransactions của bạn đang trả về handleAdd nhận (e: React.FormEvent).
-            // Nhưng TransactionsSection lại gọi handleAddTransaction(dataObject).
-            // Để fix nhanh, ta sửa lại prop handleAddTransaction bên dưới:
             toggleTransactionReceived={(id, val) => toggleTransactionReceived(String(id), val)}
             editingTransaction={editingTransaction}
             editTransactionData={editTransactionData}

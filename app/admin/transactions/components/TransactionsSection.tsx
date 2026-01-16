@@ -45,6 +45,7 @@ export default function TransactionsSection({
     const [type, setType] = useState<"thu" | "chi">("thu");
     const [date, setDate] = useState(new Date().toISOString().slice(0, 16));
     const [searchName, setSearchName] = useState("");
+      const [filterDate, setFilterDate] = useState("");
 
     const onAdd = (e: React.FormEvent) => {
         e.preventDefault();
@@ -147,38 +148,65 @@ export default function TransactionsSection({
 
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
-                <input
-                  type="search"
-                  placeholder="Tìm theo tên / mô tả..."
-                  value={searchName}
-                  onChange={(e) => setSearchName(e.target.value)}
-                  className="border p-2 rounded text-sm hover:shadow-md hover:border-gray-300 transition-shadow duration-150 focus:outline-none focus:ring-2 focus:ring-emerald-100"
-                />
-              </div>
+                  <input
+                    type="search"
+                    placeholder="Tìm theo tên / mô tả..."
+                    value={searchName}
+                    onChange={(e) => setSearchName(e.target.value)}
+                    className="border p-2 rounded text-sm hover:shadow-md hover:border-gray-300 transition-shadow duration-150 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                  />
+                  <input
+                    type="date"
+                    className="border p-2 rounded text-sm"
+                    value={filterDate}
+                    onChange={(e) => setFilterDate(e.target.value)}
+                    aria-label="Lọc theo ngày giao dịch"
+                  />
+                  {filterDate && (
+                    <button type="button" onClick={() => setFilterDate("")} className="text-sm text-gray-500 hover:underline">Xóa ngày</button>
+                  )}
+                </div>
               <button onClick={handleExportXlsx} title="Xuất tất cả giao dịch ra file Excel" aria-label="Xuất Excel giao dịch" className="bg-emerald-600 text-white px-3 py-1 rounded text-sm hover:bg-emerald-500">Xuất Excel</button>
             </div>
 
             {/* Bảng Danh Sách */}
-            <TransactionsTable 
-                items={Array.isArray(items) && searchName.trim() !== "" ? items.filter(t => {
-                  const q = searchName.trim().toLowerCase();
-                  return (
+            {
+              (() => {
+                const q = searchName.trim().toLowerCase();
+                const filtered = Array.isArray(items) ? items.filter(t => {
+                  const matchesQ = q === "" ? true : (
                     (t.description ?? "").toString().toLowerCase().includes(q) ||
                     (t.performedBy ?? "").toString().toLowerCase().includes(q) ||
                     (t.user?.name ?? "").toString().toLowerCase().includes(q)
                   );
-                }) : items}
-                categories={categories}
-                user={user}
-                handleDelete={handleDeleteTransaction}
-                toggleTransactionReceived={toggleTransactionReceived}
-                editingTransaction={editingTransaction}
-                editTransactionData={editTransactionData}
-                setEditTransactionData={setEditTransactionData}
-                startEditTransaction={startEditTransaction}
-                saveEditTransaction={saveEditTransaction}
-                cancelEditTransaction={cancelEditTransaction}
-            />
+
+                  const matchesDate = filterDate === "" ? true : (() => {
+                    if (!t.date) return false;
+                    const td = new Date(t.date);
+                    if (isNaN(td.getTime())) return false;
+                    return td.toISOString().slice(0,10) === filterDate;
+                  })();
+
+                  return matchesQ && matchesDate;
+                }) : items;
+
+                return (
+                  <TransactionsTable
+                    items={filtered}
+                    categories={categories}
+                    user={user}
+                    handleDelete={handleDeleteTransaction}
+                    toggleTransactionReceived={toggleTransactionReceived}
+                    editingTransaction={editingTransaction}
+                    editTransactionData={editTransactionData}
+                    setEditTransactionData={setEditTransactionData}
+                    startEditTransaction={startEditTransaction}
+                    saveEditTransaction={saveEditTransaction}
+                    cancelEditTransaction={cancelEditTransaction}
+                  />
+                );
+              })()
+            }
         </div>
     );
 }

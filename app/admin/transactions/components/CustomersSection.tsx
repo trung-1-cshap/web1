@@ -38,6 +38,7 @@ export default function CustomersSection({
   const [newContractMonths, setNewContractMonths] = useState<number | "">("");
   const [newCommission, setNewCommission] = useState<number | "">("");
   const [searchName, setSearchName] = useState("");
+  const [filterContractDate, setFilterContractDate] = useState("");
 
   // State cho form sửa
   const [editName, setEditName] = useState("");
@@ -153,11 +154,10 @@ export default function CustomersSection({
             />
             <input
               inputMode="numeric"
-              pattern="\\d*"
               className="border p-2 rounded"
               placeholder="Số điện thoại"
               value={newPhone}
-              onChange={(e) => setNewPhone(e.target.value.replace(/\\D/g, ''))}
+              onChange={(e) => setNewPhone(e.target.value.replace(/\D/g, ''))}
             />
             <input
               className="border p-2 rounded"
@@ -194,12 +194,11 @@ export default function CustomersSection({
             />
             <input
               inputMode="numeric"
-              pattern="\\d*"
               className="border p-2 rounded"
               placeholder="Số tháng hợp đồng"
               value={newContractMonths}
               onChange={(e) => {
-                const v = e.target.value.replace(/\\D/g, '');
+                const v = e.target.value.replace(/\D/g, '');
                 setNewContractMonths(v === '' ? '' : Number(v));
               }}
             />
@@ -226,13 +225,25 @@ export default function CustomersSection({
 
           {/* Tìm kiếm khách hàng (nằm dưới form thêm khách hàng) */}
           <div className="mb-4">
-            <input
-              type="search"
-              placeholder="Tìm khách hàng theo tên, SĐT hoặc ghi chú..."
-              value={searchName}
-              onChange={(e) => setSearchName(e.target.value)}
-              className="border p-2 rounded text-sm w-full md:w-64 hover:shadow-md hover:border-gray-300 transition-shadow duration-150 focus:outline-none focus:ring-2 focus:ring-emerald-100"
-            />
+            <div className="flex items-center gap-2">
+              <input
+                type="search"
+                placeholder="Tìm khách hàng theo tên, SĐT hoặc ghi chú..."
+                value={searchName}
+                onChange={(e) => setSearchName(e.target.value)}
+                className="border p-2 rounded text-sm w-full md:w-64 hover:shadow-md hover:border-gray-300 transition-shadow duration-150 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+              />
+              <input
+                type="date"
+                className="border p-2 rounded text-sm"
+                value={filterContractDate}
+                onChange={(e) => setFilterContractDate(e.target.value)}
+                aria-label="Lọc theo ngày tạo"
+              />
+              {filterContractDate && (
+                <button type="button" onClick={() => setFilterContractDate("")} className="text-sm text-gray-500 hover:underline">Xóa ngày</button>
+              )}
+            </div>
           </div>
 
           {/* Modal Sửa Khách Hàng */}
@@ -309,13 +320,24 @@ export default function CustomersSection({
       {
         (() => {
           const q = String(searchName ?? "").trim().toLowerCase();
-          const filtered = q === "" ? customers : (Array.isArray(customers) ? customers.filter(c => {
-            return (
+            const filtered = Array.isArray(customers) ? customers.filter(c => {
+            const matchesQ = q === "" ? true : (
               (c.name ?? "").toString().toLowerCase().includes(q) ||
               (c.phone ?? "").toString().toLowerCase().includes(q) ||
               (c.note ?? "").toString().toLowerCase().includes(q)
             );
-          }) : customers);
+
+            // Filter by createdAt (ngày tạo)
+            const matchesDate = filterContractDate === "" ? true : (() => {
+              const cd = c.createdAt;
+              if (!cd) return false;
+              const d = new Date(cd);
+              if (isNaN(d.getTime())) return false;
+              return d.toISOString().slice(0,10) === filterContractDate;
+            })();
+
+            return matchesQ && matchesDate;
+          }) : customers;
 
           return (
             <CustomersTable
@@ -323,7 +345,6 @@ export default function CustomersSection({
               user={user}
               startEditCustomer={startEditCustomer}
               handleDeleteCustomer={handleDeleteCustomer}
-              // ✅ FIX LỖI Ở ĐÂY: Thêm hàm dự phòng (async () => {}) nếu handleApproveCustomer bị null
               handleApproveCustomer={handleApproveCustomer ?? (async () => {})}
               toggleCustomerReceived={toggleCustomerReceived}
             />
